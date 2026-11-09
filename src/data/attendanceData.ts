@@ -40,6 +40,14 @@ export const PILOT_SUBJECTS: Subject[] = [
     branch: "Computer Science & Engineering",
     semester: 1,
   },
+  {
+    id: "sub-bt106",
+    // Provisional code — not an official RGPV subject code
+    name: "English for Communication",
+    code: "BT-106 (Provisional)",
+    branch: "Computer Science & Engineering",
+    semester: 1,
+  },
 ];
 
 /**

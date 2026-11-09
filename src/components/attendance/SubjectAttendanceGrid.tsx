@@ -111,18 +111,29 @@ export function SubjectAttendanceGrid() {
 
               {/* Footer advice */}
               <div className="pt-3 border-t border-neutral-border/70 text-xs text-neutral-secondary">
-                {isSafe ? (
-                  <span>
-                    <strong className="text-navy">{item.safeBunks}</strong> safe
-                    bunk{item.safeBunks !== 1 ? "s" : ""} remaining above 75%.
-                  </span>
+                {item.total === 0 ? (
+                  <span className="italic">No classes recorded yet for this subject.</span>
+                ) : isSafe ? (
+                  item.safeBunks === 0 ? (
+                    <span>
+                      Right at the 75% boundary —{" "}
+                      <strong className="text-semantic-warning">
+                        do not miss the next class.
+                      </strong>
+                    </span>
+                  ) : (
+                    <span>
+                      <strong className="text-navy">{item.safeBunks}</strong> safe
+                      bunk{item.safeBunks !== 1 ? "s" : ""} remaining above 75%.
+                    </span>
+                  )
                 ) : (
                   <span>
                     Attend next{" "}
                     <strong className="text-semantic-error">
                       {item.classesNeeded}
                     </strong>{" "}
-                    class{item.classesNeeded !== 1 ? "es" : ""} to reach 75%.
+                    consecutive class{item.classesNeeded !== 1 ? "es" : ""} to reach 75%.
                   </span>
                 )}
               </div>
