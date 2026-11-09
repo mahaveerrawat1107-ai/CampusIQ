@@ -6,7 +6,6 @@ import { RecentNotes } from "@/components/home/RecentNotes";
 import { QuickActions } from "@/components/home/QuickActions";
 import {
   mockStudent,
-  mockAttendance,
   mockQuickStats,
   mockUpcomingAssignments,
   mockRecentNotes,
@@ -22,7 +21,7 @@ export default function HomePage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* B. Attendance Overview (7 cols on large desktop) */}
         <div className="lg:col-span-7">
-          <AttendanceCard data={mockAttendance} />
+          <AttendanceCard />
         </div>
 
         {/* C. Quick Statistics (5 cols on large desktop) */}

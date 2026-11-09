@@ -20,114 +20,74 @@
 
 ---
 
-## 2. Confirmed MVP Scope
+## 2. Confirmed MVP Scope & Module Status
 
 The student application consists of **five primary navigation destinations**, plus a **separate protected Admin Panel** (not part of the student bottom navigation).
 
-### 1. Home (Dashboard) — *Stage 1 Implemented*
-- Academic overview and dynamic time-based greeting.
-- Attendance summary card with overall percentage (82%), attended/held totals (41/50), target indicator (75%), and safe status.
+### 1. Home (Dashboard) — *Stage 1 Implemented & Synchronized*
+- Dynamic time-based greeting & current date.
+- Real-time attendance summary synchronized with the Attendance engine via `useAttendance()`.
 - Quick-stat cards for pending assignments (4) and new course notes (3).
-- Upcoming assignments list (max 3 items with subject, title, due date, priority badge, pending status).
-- Recent notes list (max 3 recent PDFs with subject, unit, file size, upload timestamp).
-- Quick navigation shortcuts.
+- Upcoming assignments preview list (top 3) with clear indicator for the 4th item.
+- Recent notes preview list (top 3) with clear Demo PDF labels.
+- Interconnected quick navigation links to all modules.
 
-### 2. Attendance (Next Milestone)
-- Student-entered present/absent records per class session.
-- Subject-wise totals and percentage calculation: $\text{Percentage} = (A / T) \times 100$.
-- **75% Calculator Rules:**
-  - Classes to attend to reach 75%: $x = \lceil(0.75 \times T - A) / 0.25\rceil$.
-  - Classes that can be missed safely: $b = \lfloor(A / 0.75) - T\rfloor$.
-- Numerator and denominator always visible ($A / T$).
-- Integrity rule: Duplicate prevention for the same student + subject + session date + session number.
-- Explicit label: *"Self-reported estimate, not official college record."*
+### 2. Attendance Tracker — *Stage 2 Implemented*
+- Single centralized `AttendanceContext` managing state with browser-safe `localStorage` persistence.
+- Unified calculation engine (`calculateAttendanceMetrics`):
+  - Current attendance percentage: $(P / T) \times 100$.
+  - Safe bunks formula (when $\ge 75\%$): $b = \lfloor(P / 0.75) - T\rfloor$.
+  - Recovery formula (when $< 75\%$): $x = \lceil(0.75 \times T - P) / 0.25\rceil$.
+- Pre-seeded subject catalog for 1st Year CSE:
+  - Engineering Chemistry (`BT-101`)
+  - Mathematics-I (`BT-102`)
+  - Basic Electrical & Electronics (`BT-104`)
+  - Engineering Graphics (`BT-105`)
+- Mark Attendance Interface with date picker, duplicate prevention, and in-place editing.
+- Filterable attendance history log by subject and status with individual deletion support.
+- Interactive "What-If" 75% scenario simulator.
 
-### 3. Assignments
-- Assignment listing filtered by status: Pending, Completed, Due Soon, Overdue.
-- Details: Subject, title, due date, description, optional PDF attachment.
-- Personal completion tracking: Student marks tasks completed for their own records.
-- Explicit label: Personal tracker, not an official submission/grading portal.
+### 3. Assignments (Stage 3 Scaffold)
+- Filterable by status: Pending, Completed, Due Soon, Overdue.
+- Details: Subject, title, due date, description, optional attachment.
+- Personal completion tracking.
 
-### 4. Notes Library
+### 4. Notes Library (Stage 4 Scaffold)
 - Academic hierarchy: **Semester → Subject → Unit → PDF**.
 - Search and filtering by subject/unit.
 - Mobile-friendly PDF preview with download fallback.
-- Admin-curated uploads only.
 
-### 5. Profile
-- Student information: Full name, enrollment number, branch (CSE), semester (1st Year / Sem 1).
-- Account settings and secure sign-out.
+### 5. Profile (Stage 5 Scaffold)
+- Student identity: Full name, enrollment number (`0192CS261042`), branch (CSE), semester (Semester 1).
+- Account settings and sign-out.
 
-### 6. Admin Panel (Protected Route)
-- Dedicated administrative interface.
-- Upload course PDFs to private Supabase Storage, recording metadata in PostgreSQL.
-- Create and manage assignments.
-- Manage branch, semester, and subject catalog.
-- Role-based server-side security checks (no client-side role elevation).
+### 6. Admin Panel (Protected Route - Post Student MVP)
+- Separate administrative interface for content curation.
 
 ---
 
-## 3. Explicitly Out of Scope for MVP
+## 3. Visual Design System & Design Tokens
 
-These features are strictly deferred:
-- ❌ Facial recognition / camera attendance.
-- ❌ OCR register scanning.
-- ❌ Teacher accounts and teacher grading workflows.
-- ❌ Automatic college ERP / RGPV scraping or integration.
-- ❌ AI academic assistant / PDF Q&A (planned for Phase P2 post-pilot).
-- ❌ Multi-college tenancy (single-college pilot first).
-- ❌ Native Android application (mobile-first responsive web / PWA first).
-- ❌ Payments, wallets, social feeds, or gamification economies.
-
----
-
-## 4. Visual Design System & Design Tokens
-
-### Design Direction
 - **Theme:** Clean Light Mode.
-- **UI Style:** Premium Minimal (inspired by the clarity of Notion and Linear; no generic AI aesthetics).
-- **Dashboard Density:** Balanced.
-- **Motion:** Subtle (100–200ms transitions; respects `prefers-reduced-motion`).
-
-### Global Color Tokens
-| Token | Hex | Role |
-| :--- | :--- | :--- |
-| **Primary Background** | `#F7F8FC` | Main app background canvas |
-| **Surface** | `#FFFFFF` | Cards, modals, elevated sheets |
-| **Primary Navy** | `#292D45` | Primary text, titles, structured elements |
-| **Primary Accent** | `#635BFF` | Active navigation, primary actions, highlights |
-| **Secondary Text** | `#687086` | Subtitles, labels, metadata |
-| **Border** | `#E9EAF1` | Subtle divider lines, card borders |
-| **Semantic Success** | `#0D9488` | Safe attendance (≥ 75%), completed tasks |
-| **Semantic Warning** | `#F59E0B` | Near-threshold attendance (70–74.9%), due soon |
-| **Semantic Error** | `#DC5252` | Critical attendance (< 70%), overdue tasks |
-
-### Typography Tokens (Typeface: Manrope)
-- **Main Page Headings:** 28px, Weight 700, Line height 1.25
-- **Section Headings:** 20px, Weight 700, Line height 1.3
-- **Card Headings:** 16px, Weight 600, Line height 1.4
-- **Body Text:** 15px, Weight 400, Line height 1.5
-- **Secondary Text:** 13px, Weight 500, Line height 1.4
-- **Labels:** 12px, Weight 600, Uppercase / tracking-wider
-- **Buttons:** 14px, Weight 600
-- **Important Numbers:** 28–32px, Weight 700 (`tabular-nums`)
+- **UI Style:** Premium Minimal (Notion/Linear clarity; no generic AI aesthetics).
+- **Typography:** Manrope via `next/font/google` (`tabular-nums` for numbers & percentages).
+- **Global Tokens:**
+  - Background: `#F7F8FC`
+  - Surface: `#FFFFFF`
+  - Primary Navy: `#292D45`
+  - Primary Accent: `#635BFF`
+  - Secondary Text: `#687086`
+  - Border: `#E9EAF1`
+  - Success: `#0D9488`
+  - Warning: `#F59E0B`
+  - Error: `#DC5252`
 
 ---
 
-## 5. Current Development Stage & Status
+## 4. Current Development Stage & Status
 
-- **Stage 0 — Project Foundation:** Completed & verified.
-- **Stage 1 — Home Dashboard (Static UI):** Completed & verified.
-  - Desktop sidebar + mobile fixed bottom navigation shell implemented.
-  - Home dashboard with attendance overview, stats, upcoming assignments, recent notes, and shortcuts implemented.
-- **Next Milestone:** Stage 2 — Attendance Module (Static UI & Calculation Engine).
-
----
-
-## 6. Open / Provisional Decisions (To Be Confirmed)
-
-1. **Authentication Mechanism:**
-   - Provisional pilot proposal: Email + password with admin allowlist / pre-created test accounts.
-   - Long-term: Phone OTP + enrollment identifier, subject to college administration approval and pilot feedback.
-2. **Subject Catalog Ownership:**
-   - Whether the initial pilot relies strictly on pre-seeded 1st-year CSE subjects (Mathematics-I, Chemistry, BEEE, etc.) or allows students to add personalized subjects in their personal tracker.
+- **Stage 0 — Foundation & Design System:** Completed.
+- **Stage 1 — Home Dashboard (Static UI):** Completed.
+- **Stage 1.1 — Functional Navigation & Scaffolding:** Completed.
+- **Stage 2 — Functional Attendance Management System:** Completed.
+- **Next Milestone:** Stage 3 — Assignment Management System.
