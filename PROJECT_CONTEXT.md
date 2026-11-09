@@ -1,7 +1,7 @@
 # CAMPUSIQ — PROJECT CONTEXT & ARCHITECTURE SPECIFICATION
 
 > **Durable Source of Truth for CampusIQ Development**  
-> *Last updated: 09 November 2026*  
+> *Last updated: 09 November 2026 (Stage 2.1 commit: 2788ca4)*  
 > *Initial Pilot Target: UIT RGPV Shivpuri, Madhya Pradesh, India (1st Year CSE)*
 
 ---
@@ -32,20 +32,26 @@ The student application consists of **five primary navigation destinations**, pl
 - Recent notes preview list (top 3) with clear Demo PDF labels.
 - Interconnected quick navigation links to all modules.
 
-### 2. Attendance Tracker — *Stage 2 Implemented*
+### 2. Attendance Tracker — *Stage 2.1 Implemented & Verified*
 - Single centralized `AttendanceContext` managing state with browser-safe `localStorage` persistence.
-- Unified calculation engine (`calculateAttendanceMetrics`):
-  - Current attendance percentage: $(P / T) \times 100$.
-  - Safe bunks formula (when $\ge 75\%$): $b = \lfloor(P / 0.75) - T\rfloor$.
-  - Recovery formula (when $< 75\%$): $x = \lceil(0.75 \times T - P) / 0.25\rceil$.
-- Pre-seeded subject catalog for 1st Year CSE:
+- Unified calculation engine (`calculateAttendanceMetrics`) — **confirmed business rules (Stage 2.1)**:
+  - **Safe:** `attendance >= 75%` (always, even when safeBunks = 0).
+  - **Warning:** `attendance >= 70%` and `< 75%`.
+  - **Critical:** `attendance < 70%`.
+  - Safe bunks formula (when ≥ 75%): $b = \lfloor(P / 0.75) - T\rfloor$.
+  - Recovery formula (when < 75%): $x = \lceil(0.75 \times T - P) / 0.25\rceil$.
+  - Recovery message suppressed when already ≥ 75%; boundary warning shown when safeBunks = 0.
+- Pre-seeded subject catalog for 1st Year CSE (5 subjects, confirmed by user):
   - Engineering Chemistry (`BT-101`)
   - Mathematics-I (`BT-102`)
   - Basic Electrical & Electronics (`BT-104`)
   - Engineering Graphics (`BT-105`)
+  - English for Communication (`BT-106 (Provisional)`) — **added Stage 2.1; no seed records**
+- Seed data: 50 total records, 41 present = **82.0% overall** (BT-106 starts at 0/0).
 - Mark Attendance Interface with date picker, duplicate prevention, and in-place editing.
-- Filterable attendance history log by subject and status with individual deletion support.
+- Filterable attendance history log — shows latest 10 by default; Load More pagination; filters reset count.
 - Interactive "What-If" 75% scenario simulator.
+- Home Dashboard attendance card always synchronized with Attendance page via shared `useAttendance()`.
 
 ### 3. Assignments (Stage 3 Scaffold)
 - Filterable by status: Pending, Completed, Due Soon, Overdue.
@@ -90,4 +96,11 @@ The student application consists of **five primary navigation destinations**, pl
 - **Stage 1 — Home Dashboard (Static UI):** Completed.
 - **Stage 1.1 — Functional Navigation & Scaffolding:** Completed.
 - **Stage 2 — Functional Attendance Management System:** Completed.
-- **Next Milestone:** Stage 3 — Assignment Management System.
+- **Stage 2.1 — Attendance Logic Corrections:** Completed (commit `2788ca4`).
+  - Fixed status rules: Safe ≥75%, Warning 70–74.9%, Critical <70%.
+  - Fixed recovery messages: no "Attend 0 classes" when already above target.
+  - Added BT-106 English for Communication (provisional code, no seed records).
+  - History UX: removed max-h scroll, Load More pagination (10 per page), filter-aware count reset.
+  - Build verified: 8/8 static routes, 0 TypeScript errors.
+  - Server probed: Home 82% ✓, Attendance BT-106 ✓, English for Communication ✓, Attendance 82% ✓.
+- **Next Milestone:** Stage 3 — Assignment Management System (awaiting user approval).
