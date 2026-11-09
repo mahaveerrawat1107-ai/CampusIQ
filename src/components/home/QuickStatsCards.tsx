@@ -1,0 +1,88 @@
+import React from "react";
+import { ClipboardList, BookOpen, ArrowRight } from "lucide-react";
+
+interface QuickStatsCardsProps {
+  pendingAssignments: number;
+  newNotesCount: number;
+}
+
+export function QuickStatsCards({
+  pendingAssignments,
+  newNotesCount,
+}: QuickStatsCardsProps) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Pending Assignments Card */}
+      <div className="bg-surface rounded-card border border-neutral-border p-5 shadow-card hover:border-neutral-border/80 transition-colors flex flex-col justify-between">
+        <div className="flex items-start justify-between">
+          <div>
+            <span className="text-[12px] font-semibold uppercase tracking-wider text-neutral-secondary">
+              Assignments
+            </span>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-[32px] font-bold text-navy leading-none tabular-nums">
+                {pendingAssignments}
+              </span>
+              <span className="text-xs font-semibold text-semantic-warning bg-semantic-warning-subtle px-2 py-0.5 rounded-full">
+                Action required
+              </span>
+            </div>
+            <p className="text-xs text-neutral-secondary mt-1.5">
+              Tasks remaining to submit
+            </p>
+          </div>
+
+          <div className="w-10 h-10 rounded-input bg-indigo-subtle text-indigo flex items-center justify-center flex-shrink-0">
+            <ClipboardList className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="mt-4 pt-3 border-t border-neutral-border">
+          <button
+            type="button"
+            className="w-full flex items-center justify-between text-xs font-semibold text-neutral-secondary hover:text-indigo transition-colors"
+          >
+            <span>Track assignments</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* New Notes Card */}
+      <div className="bg-surface rounded-card border border-neutral-border p-5 shadow-card hover:border-neutral-border/80 transition-colors flex flex-col justify-between">
+        <div className="flex items-start justify-between">
+          <div>
+            <span className="text-[12px] font-semibold uppercase tracking-wider text-neutral-secondary">
+              Notes Library
+            </span>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-[32px] font-bold text-navy leading-none tabular-nums">
+                {newNotesCount}
+              </span>
+              <span className="text-xs font-semibold text-indigo bg-indigo-subtle px-2 py-0.5 rounded-full">
+                Semester 1
+              </span>
+            </div>
+            <p className="text-xs text-neutral-secondary mt-1.5">
+              PDFs uploaded this week
+            </p>
+          </div>
+
+          <div className="w-10 h-10 rounded-input bg-semantic-success-subtle text-semantic-success flex items-center justify-center flex-shrink-0">
+            <BookOpen className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="mt-4 pt-3 border-t border-neutral-border">
+          <button
+            type="button"
+            className="w-full flex items-center justify-between text-xs font-semibold text-neutral-secondary hover:text-indigo transition-colors"
+          >
+            <span>Browse notes</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

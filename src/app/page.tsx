@@ -1,58 +1,59 @@
-import { ArrowRight, CheckCircle2, Layers } from "lucide-react";
+import { AppShell } from "@/components/layout/AppShell";
+import { DashboardHeader } from "@/components/home/DashboardHeader";
+import { AttendanceCard } from "@/components/home/AttendanceCard";
+import { QuickStatsCards } from "@/components/home/QuickStatsCards";
+import { UpcomingAssignments } from "@/components/home/UpcomingAssignments";
+import { RecentNotes } from "@/components/home/RecentNotes";
+import { QuickActions } from "@/components/home/QuickActions";
+import {
+  mockStudent,
+  mockAttendance,
+  mockQuickStats,
+  mockUpcomingAssignments,
+  mockRecentNotes,
+} from "@/data/mockHomeData";
 
-export default function RootPage() {
+export default function HomePage() {
   return (
-    <main className="min-h-screen flex items-center justify-center p-6 bg-background">
-      <div className="w-full max-w-lg bg-surface border border-neutral-border rounded-card p-8 shadow-card">
-        {/* Header Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-subtle text-indigo text-xs font-semibold mb-6">
-          <Layers className="w-3.5 h-3.5" />
-          <span>Stage 0: Foundation Complete</span>
-        </div>
+    <AppShell>
+      <div className="space-y-6">
+        {/* A. Header */}
+        <DashboardHeader studentName={mockStudent.name} />
 
-        {/* Brand & Title */}
-        <h1 className="text-[28px] leading-[1.25] font-bold text-navy tracking-tight mb-2">
-          CampusIQ
-        </h1>
-        <p className="text-[15px] leading-[1.5] text-neutral-secondary mb-6">
-          &ldquo;Your college. Your academics. One organized workspace.&rdquo;
-        </p>
-
-        {/* Foundation Checklist */}
-        <div className="space-y-3 border-t border-neutral-border pt-6 mb-6">
-          <div className="text-xs font-semibold uppercase tracking-wider text-neutral-secondary">
-            Design System & Foundation Setup
+        {/* Top Grid: Attendance Overview + Quick Statistics */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* B. Attendance Overview (7 cols on large desktop) */}
+          <div className="lg:col-span-7">
+            <AttendanceCard data={mockAttendance} />
           </div>
 
-          <div className="flex items-center gap-3 text-[14px] text-navy">
-            <CheckCircle2 className="w-4 h-4 text-semantic-success flex-shrink-0" />
-            <span>Manrope typography configured & loaded</span>
-          </div>
-
-          <div className="flex items-center gap-3 text-[14px] text-navy">
-            <CheckCircle2 className="w-4 h-4 text-semantic-success flex-shrink-0" />
-            <span>Approved color tokens & 8px spacing rules active</span>
-          </div>
-
-          <div className="flex items-center gap-3 text-[14px] text-navy">
-            <CheckCircle2 className="w-4 h-4 text-semantic-success flex-shrink-0" />
-            <span>Next.js 14 App Router, TypeScript & Lucide icons ready</span>
-          </div>
-
-          <div className="flex items-center gap-3 text-[14px] text-navy">
-            <CheckCircle2 className="w-4 h-4 text-semantic-success flex-shrink-0" />
-            <span>Target institution: UIT RGPV Shivpuri (1st Year CSE)</span>
+          {/* C. Quick Statistics (5 cols on large desktop) */}
+          <div className="lg:col-span-5 flex flex-col justify-between">
+            <QuickStatsCards
+              pendingAssignments={mockQuickStats.pendingAssignments}
+              newNotesCount={mockQuickStats.newNotesCount}
+            />
           </div>
         </div>
 
-        {/* Next Stage Note */}
-        <div className="p-4 rounded-input bg-neutral-light border border-neutral-border">
-          <p className="text-xs font-semibold text-navy mb-1">Awaiting Founder Approval</p>
-          <p className="text-xs text-neutral-secondary leading-relaxed">
-            Ready to implement <strong>CampusIQ Home Page — Stage 1: Static UI</strong> upon your confirmation.
-          </p>
+        {/* Middle Grid: Upcoming Assignments + Recent Notes */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* D. Upcoming Assignments */}
+          <div className="lg:col-span-7">
+            <UpcomingAssignments assignments={mockUpcomingAssignments} />
+          </div>
+
+          {/* E. Recent Notes */}
+          <div className="lg:col-span-5">
+            <RecentNotes notes={mockRecentNotes} />
+          </div>
+        </div>
+
+        {/* F. Quick Actions */}
+        <div>
+          <QuickActions />
         </div>
       </div>
-    </main>
+    </AppShell>
   );
 }

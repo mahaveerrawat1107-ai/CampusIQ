@@ -2,7 +2,7 @@
 
 > **Durable Source of Truth for CampusIQ Development**  
 > *Last updated: 09 November 2026*  
-> *Initial Pilot: UIT RGPV Shivpuri, Madhya Pradesh, India (1st Year CSE)*
+> *Initial Pilot Target: UIT RGPV Shivpuri, Madhya Pradesh, India (1st Year CSE)*
 
 ---
 
@@ -24,15 +24,15 @@
 
 The student application consists of **five primary navigation destinations**, plus a **separate protected Admin Panel** (not part of the student bottom navigation).
 
-### 1. Home (Dashboard)
-- Academic overview and greeting.
-- Attendance summary card with overall percentage and 75% target guidance.
-- Quick-stat cards for pending assignments and newly available resources.
-- Upcoming assignments list (up to 3 items with subject, title, due date, status).
-- Recent notes list (up to 3 recent PDFs with subject and unit).
+### 1. Home (Dashboard) — *Stage 1 Implemented*
+- Academic overview and dynamic time-based greeting.
+- Attendance summary card with overall percentage (82%), attended/held totals (41/50), target indicator (75%), and safe status.
+- Quick-stat cards for pending assignments (4) and new course notes (3).
+- Upcoming assignments list (max 3 items with subject, title, due date, priority badge, pending status).
+- Recent notes list (max 3 recent PDFs with subject, unit, file size, upload timestamp).
 - Quick navigation shortcuts.
 
-### 2. Attendance
+### 2. Attendance (Next Milestone)
 - Student-entered present/absent records per class session.
 - Subject-wise totals and percentage calculation: $\text{Percentage} = (A / T) \times 100$.
 - **75% Calculator Rules:**
@@ -69,7 +69,7 @@ The student application consists of **five primary navigation destinations**, pl
 
 ## 3. Explicitly Out of Scope for MVP
 
-These features are strictly deferred to maintain focus and ship a reliable pilot:
+These features are strictly deferred:
 - ❌ Facial recognition / camera attendance.
 - ❌ OCR register scanning.
 - ❌ Teacher accounts and teacher grading workflows.
@@ -112,46 +112,22 @@ These features are strictly deferred to maintain focus and ship a reliable pilot
 - **Buttons:** 14px, Weight 600
 - **Important Numbers:** 28–32px, Weight 700 (`tabular-nums`)
 
-### Component Rules
-- **Spacing:** Base 8px system (`p-2`, `p-4`, `p-6`, `p-8`).
-- **Cards:** White background, 14–16px border-radius, thin border (`#E9EAF1`), subtle shadow.
-- **Touch Targets:** 44–48px minimum height for primary mobile actions.
-- **Inputs:** 10–12px radius, clear focus rings in primary accent (`#635BFF`).
-- **Icons:** Lucide React with consistent 1.75px–2px stroke weight.
+---
+
+## 5. Current Development Stage & Status
+
+- **Stage 0 — Project Foundation:** Completed & verified.
+- **Stage 1 — Home Dashboard (Static UI):** Completed & verified.
+  - Desktop sidebar + mobile fixed bottom navigation shell implemented.
+  - Home dashboard with attendance overview, stats, upcoming assignments, recent notes, and shortcuts implemented.
+- **Next Milestone:** Stage 2 — Attendance Module (Static UI & Calculation Engine).
 
 ---
 
-## 5. Responsive Design Principles
+## 6. Open / Provisional Decisions (To Be Confirmed)
 
-- **Mobile (< 768px):** Fixed bottom navigation bar with the 5 core destinations. Vertical card stack. No horizontal scrolling. Thumb-friendly touch targets.
-- **Tablet (768px – 1024px):** Balanced 2-column dashboard grids, fluid card containers.
-- **Desktop (> 1024px):** Fixed left sidebar navigation, top contextual header, centered responsive content with max-width containment (`max-w-6xl` or `max-w-7xl`).
-
----
-
-## 6. Technical Stack & Architecture
-
-- **Framework:** Next.js 14 (App Router)
-- **Language:** TypeScript (Strict mode)
-- **Styling:** Tailwind CSS v3 with custom design tokens
-- **Icons:** Lucide React
-- **Backend (Planned):** Supabase (Auth, PostgreSQL with strict Row Level Security, private Storage Buckets with signed URLs)
-- **Hosting:** Vercel
-- **Source Control:** Git + GitHub
-
----
-
-## 7. Current Development Stage & Status
-
-- **Stage:** **Stage 0 — Project Foundation (Completed)**
-- **Workspace State:** Next.js 14 App Router, TypeScript, Tailwind CSS, Lucide React, Manrope font, and global design tokens fully established.
-- **Next Approved Milestone:** **Stage 1 — CampusIQ Home Page: Static UI Implementation**.
-
----
-
-## 8. Confirmed Pilot Settings & Open Decisions
-
-- **Confirmed Pilot Audience:** 1st Year CSE Students at UIT RGPV Shivpuri.
-- **Confirmed Auth Direction (Option A):** Email + password with admin allowlist / test accounts for the pilot.
-- **Subject Catalog Decision:** Students can maintain their own subjects in their tracker; not blocked on admin-managed catalog.
-- **Pending Decision:** College branding approval before production launch (pilot will use neutral CampusIQ branding).
+1. **Authentication Mechanism:**
+   - Provisional pilot proposal: Email + password with admin allowlist / pre-created test accounts.
+   - Long-term: Phone OTP + enrollment identifier, subject to college administration approval and pilot feedback.
+2. **Subject Catalog Ownership:**
+   - Whether the initial pilot relies strictly on pre-seeded 1st-year CSE subjects (Mathematics-I, Chemistry, BEEE, etc.) or allows students to add personalized subjects in their personal tracker.
