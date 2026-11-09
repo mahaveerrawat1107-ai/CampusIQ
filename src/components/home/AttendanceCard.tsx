@@ -1,5 +1,6 @@
 import React from "react";
-import { ArrowUpRight, CheckCircle2, ShieldCheck, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, CheckCircle2, ShieldCheck } from "lucide-react";
 import { AttendanceData } from "@/data/mockHomeData";
 
 interface AttendanceCardProps {
@@ -7,8 +8,6 @@ interface AttendanceCardProps {
 }
 
 export function AttendanceCard({ data }: AttendanceCardProps) {
-  const isSafe = data.percentage >= data.target;
-
   return (
     <div className="bg-surface rounded-card border border-neutral-border p-6 shadow-card flex flex-col justify-between">
       <div>
@@ -89,13 +88,13 @@ export function AttendanceCard({ data }: AttendanceCardProps) {
           *Self-reported estimate based on your logged classes.
         </span>
 
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo hover:text-indigo-hover transition-colors group"
+        <Link
+          href="/attendance"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo hover:text-indigo-hover transition-colors group focus-visible:ring-2 focus-visible:ring-indigo rounded"
         >
           <span>View attendance details</span>
           <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-        </button>
+        </Link>
       </div>
     </div>
   );

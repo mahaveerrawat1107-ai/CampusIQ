@@ -1,11 +1,11 @@
 import React from "react";
+import Link from "next/link";
 import {
   ClipboardList,
   Calendar,
   Clock,
   ArrowRight,
   Circle,
-  AlertTriangle,
 } from "lucide-react";
 import { MockAssignment } from "@/data/mockHomeData";
 
@@ -59,16 +59,16 @@ export function UpcomingAssignments({ assignments }: UpcomingAssignmentsProps) {
           </div>
         </div>
 
-        <button
-          type="button"
-          className="text-xs font-semibold text-indigo hover:text-indigo-hover inline-flex items-center gap-1 transition-colors"
+        <Link
+          href="/assignments"
+          className="text-xs font-semibold text-indigo hover:text-indigo-hover inline-flex items-center gap-1 transition-colors group focus-visible:ring-2 focus-visible:ring-indigo rounded"
         >
-          <span>View all ({assignments.length})</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+          <span>View all assignments</span>
+          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </div>
 
-      {/* Assignment List */}
+      {/* Assignment List (Previews top 3) */}
       <div className="divide-y divide-neutral-border/70">
         {assignments.map((item) => (
           <div
@@ -77,19 +77,21 @@ export function UpcomingAssignments({ assignments }: UpcomingAssignmentsProps) {
           >
             {/* Left Info */}
             <div className="flex items-start gap-3">
-              <button
-                type="button"
-                className="mt-0.5 w-5 h-5 rounded border border-neutral-border flex items-center justify-center text-transparent hover:text-neutral-secondary transition-colors"
-                title="Mark personal completion"
-                aria-label="Mark personal completion"
+              <span
+                className="mt-0.5 w-5 h-5 rounded border border-neutral-border flex items-center justify-center text-neutral-secondary"
+                title="Personal completion status (Pending)"
+                aria-label="Pending assignment"
               >
-                <Circle className="w-3.5 h-3.5 text-neutral-border hover:text-indigo" />
-              </button>
+                <Circle className="w-3.5 h-3.5 text-neutral-border" />
+              </span>
 
               <div>
-                <h3 className="text-[14px] font-semibold text-navy group-hover:text-indigo transition-colors leading-snug">
+                <Link
+                  href="/assignments"
+                  className="text-[14px] font-semibold text-navy hover:text-indigo transition-colors leading-snug block"
+                >
                   {item.title}
-                </h3>
+                </Link>
                 <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-neutral-secondary">
                   <span className="font-semibold text-navy">
                     {item.subject}
@@ -117,6 +119,18 @@ export function UpcomingAssignments({ assignments }: UpcomingAssignmentsProps) {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Understandable 4th Assignment Explanation & Link */}
+      <div className="mt-4 pt-3.5 border-t border-neutral-border flex items-center justify-between text-xs text-neutral-secondary">
+        <span>Showing 3 of 4 pending assignments</span>
+        <Link
+          href="/assignments"
+          className="font-semibold text-indigo hover:text-indigo-hover inline-flex items-center gap-1"
+        >
+          <span>See 1 more in Assignments</span>
+          <ArrowRight className="w-3 h-3" />
+        </Link>
       </div>
     </div>
   );

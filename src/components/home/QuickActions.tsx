@@ -1,10 +1,10 @@
 import React from "react";
+import Link from "next/link";
 import {
   CalendarCheck2,
   ClipboardList,
   BookOpen,
   ArrowUpRight,
-  PlusCircle,
 } from "lucide-react";
 
 export function QuickActions() {
@@ -12,6 +12,7 @@ export function QuickActions() {
     {
       title: "Log Class Attendance",
       description: "Record present or absent for today's lectures & labs",
+      href: "/attendance",
       icon: CalendarCheck2,
       badge: "Quick Entry",
       accentColor: "text-semantic-success",
@@ -20,6 +21,7 @@ export function QuickActions() {
     {
       title: "Review Assignments",
       description: "Check deadlines, submission priorities & personal status",
+      href: "/assignments",
       icon: ClipboardList,
       badge: "4 Pending",
       accentColor: "text-indigo",
@@ -28,6 +30,7 @@ export function QuickActions() {
     {
       title: "Browse Subject Notes",
       description: "Access semester PDFs by subject and unit",
+      href: "/notes",
       icon: BookOpen,
       badge: "3 New",
       accentColor: "text-semantic-warning",
@@ -51,10 +54,10 @@ export function QuickActions() {
           const Icon = act.icon;
 
           return (
-            <button
+            <Link
               key={act.title}
-              type="button"
-              className="p-4 rounded-card-sm border border-neutral-border hover:border-indigo/40 bg-neutral-light hover:bg-surface text-left transition-all duration-150 flex flex-col justify-between group shadow-xs hover:shadow-subtle"
+              href={act.href}
+              className="p-4 rounded-card-sm border border-neutral-border hover:border-indigo/40 bg-neutral-light hover:bg-surface text-left transition-all duration-150 flex flex-col justify-between group shadow-xs hover:shadow-subtle focus-visible:ring-2 focus-visible:ring-indigo"
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -80,7 +83,7 @@ export function QuickActions() {
                 <span>Open module</span>
                 <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </div>
-            </button>
+            </Link>
           );
         })}
       </div>

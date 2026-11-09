@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Home,
   CalendarCheck2,
@@ -9,7 +11,6 @@ import {
   User,
   Bell,
   GraduationCap,
-  Sparkles,
 } from "lucide-react";
 
 interface AppShellProps {
@@ -18,21 +19,28 @@ interface AppShellProps {
 
 interface NavItem {
   name: string;
-  id: "home" | "attendance" | "assignments" | "notes" | "profile";
+  href: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: number;
 }
 
 const navItems: NavItem[] = [
-  { name: "Home", id: "home", icon: Home },
-  { name: "Attendance", id: "attendance", icon: CalendarCheck2 },
-  { name: "Assignments", id: "assignments", icon: ClipboardList, badge: 4 },
-  { name: "Notes Library", id: "notes", icon: BookOpen, badge: 3 },
-  { name: "Profile", id: "profile", icon: User },
+  { name: "Home", href: "/", icon: Home },
+  { name: "Attendance", href: "/attendance", icon: CalendarCheck2 },
+  { name: "Assignments", href: "/assignments", icon: ClipboardList, badge: 4 },
+  { name: "Notes Library", href: "/notes", icon: BookOpen, badge: 3 },
+  { name: "Profile", href: "/profile", icon: User },
 ];
 
 export function AppShell({ children }: AppShellProps) {
-  const activeTab = "home";
+  const pathname = usePathname();
+
+  const isItemActive = (href: string) => {
+    if (href === "/") {
+      return pathname === "/";
+    }
+    return pathname.startsWith(href);
+  };
 
   return (
     <div className="min-h-screen bg-background text-navy flex">
@@ -41,7 +49,10 @@ export function AppShell({ children }: AppShellProps) {
       {/* ============================================================ */}
       <aside className="hidden lg:flex flex-col fixed top-0 bottom-0 left-0 w-64 bg-surface border-r border-neutral-border z-30">
         {/* Brand Header */}
-        <div className="h-16 flex items-center gap-3 px-6 border-b border-neutral-border">
+        <Link
+          href="/"
+          className="h-16 flex items-center gap-3 px-6 border-b border-neutral-border hover:bg-neutral-light/50 transition-colors"
+        >
           <div className="w-9 h-9 rounded-xl bg-indigo flex items-center justify-center text-white shadow-sm flex-shrink-0">
             <GraduationCap className="w-5 h-5" />
           </div>
@@ -58,22 +69,22 @@ export function AppShell({ children }: AppShellProps) {
               UIT RGPV Shivpuri
             </p>
           </div>
-        </div>
+        </Link>
 
         {/* Navigation Items */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-4 space-y-1" aria-label="Sidebar Navigation">
           <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-secondary">
             Academic Workspace
           </div>
 
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = item.id === activeTab;
+            const isActive = isItemActive(item.href);
 
             return (
-              <button
-                key={item.id}
-                type="button"
+              <Link
+                key={item.href}
+                href={item.href}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-input text-[14px] font-medium transition-colors ${
                   isActive
                     ? "bg-indigo-subtle text-indigo font-semibold shadow-xs"
@@ -101,26 +112,30 @@ export function AppShell({ children }: AppShellProps) {
                     {item.badge}
                   </span>
                 )}
-              </button>
+              </Link>
             );
           })}
         </nav>
 
-        {/* Sidebar Footer: Student Summary */}
+        {/* Sidebar Footer: Student Profile Shortcut */}
         <div className="p-4 border-t border-neutral-border">
-          <div className="flex items-center gap-3 p-2 rounded-input bg-neutral-light border border-neutral-border">
-            <div className="w-8 h-8 rounded-full bg-indigo text-white font-semibold text-xs flex items-center justify-center flex-shrink-0">
+          <Link
+            href="/profile"
+            className="flex items-center gap-3 p-2 rounded-input bg-neutral-light hover:bg-surface border border-neutral-border transition-colors group"
+            title="View Student Profile"
+          >
+            <div className="w-8 h-8 rounded-full bg-indigo text-white font-semibold text-xs flex items-center justify-center flex-shrink-0 group-hover:ring-2 group-hover:ring-indigo/30 transition-all">
               AS
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-navy truncate">
+              <p className="text-xs font-semibold text-navy truncate group-hover:text-indigo transition-colors">
                 Alex Sharma
               </p>
               <p className="text-[11px] text-neutral-secondary truncate">
                 1st Year CSE • Sem 1
               </p>
             </div>
-          </div>
+          </Link>
         </div>
       </aside>
 
@@ -132,49 +147,58 @@ export function AppShell({ children }: AppShellProps) {
         <header className="sticky top-0 z-20 h-16 bg-surface/95 backdrop-blur-xs border-b border-neutral-border px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           {/* Mobile Brand / Desktop Title */}
           <div className="flex items-center gap-2">
-            <div className="lg:hidden w-8 h-8 rounded-lg bg-indigo flex items-center justify-center text-white flex-shrink-0">
-              <GraduationCap className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="lg:hidden font-bold text-[17px] text-navy tracking-tight">
+            <Link
+              href="/"
+              className="lg:hidden flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-indigo rounded-lg"
+            >
+              <div className="w-8 h-8 rounded-lg bg-indigo flex items-center justify-center text-white flex-shrink-0">
+                <GraduationCap className="w-4 h-4" />
+              </div>
+              <span className="font-bold text-[17px] text-navy tracking-tight">
                 CampusIQ
               </span>
-              <div className="hidden lg:flex items-center gap-2 text-xs text-neutral-secondary font-medium">
-                <span>UIT RGPV Shivpuri</span>
-                <span>•</span>
-                <span className="text-navy font-semibold">
-                  B.Tech CSE (Semester 1)
-                </span>
-              </div>
+            </Link>
+
+            <div className="hidden lg:flex items-center gap-2 text-xs text-neutral-secondary font-medium">
+              <span>UIT RGPV Shivpuri</span>
+              <span>•</span>
+              <span className="text-navy font-semibold">
+                B.Tech CSE (Semester 1)
+              </span>
             </div>
           </div>
 
           {/* Header Actions */}
           <div className="flex items-center gap-3">
-            {/* Notification button (decorative with dot indicator) */}
+            {/* Notification button (decorative with indicator) */}
             <button
               type="button"
               className="relative w-9 h-9 rounded-input border border-neutral-border flex items-center justify-center text-neutral-secondary hover:text-navy hover:bg-neutral-light transition-colors"
-              aria-label="Notifications"
+              aria-label="Notifications (Demo)"
+              title="Notifications will be enabled in pilot"
             >
               <Bell className="w-4 h-4" />
               <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-indigo ring-2 ring-surface" />
             </button>
 
-            {/* User Avatar */}
-            <div className="flex items-center gap-2.5 pl-2 border-l border-neutral-border">
-              <div className="w-9 h-9 rounded-full bg-navy text-white text-xs font-semibold flex items-center justify-center">
+            {/* User Avatar Link */}
+            <Link
+              href="/profile"
+              className="flex items-center gap-2.5 pl-2 border-l border-neutral-border group focus-visible:ring-2 focus-visible:ring-indigo rounded-input"
+              title="Go to Profile"
+            >
+              <div className="w-9 h-9 rounded-full bg-navy text-white text-xs font-semibold flex items-center justify-center group-hover:bg-indigo transition-colors">
                 AS
               </div>
               <div className="hidden sm:block text-left">
-                <p className="text-xs font-semibold text-navy leading-none">
+                <p className="text-xs font-semibold text-navy leading-none group-hover:text-indigo transition-colors">
                   Alex Sharma
                 </p>
                 <p className="text-[11px] text-neutral-secondary mt-1 leading-none font-medium">
                   Student
                 </p>
               </div>
-            </div>
+            </Link>
           </div>
         </header>
 
@@ -193,12 +217,12 @@ export function AppShell({ children }: AppShellProps) {
       >
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = item.id === activeTab;
+          const isActive = isItemActive(item.href);
 
           return (
-            <button
-              key={item.id}
-              type="button"
+            <Link
+              key={item.href}
+              href={item.href}
               className={`flex-1 h-full flex flex-col items-center justify-center gap-1 transition-colors relative min-w-[48px] ${
                 isActive ? "text-indigo" : "text-neutral-secondary hover:text-navy"
               }`}
@@ -223,7 +247,7 @@ export function AppShell({ children }: AppShellProps) {
               >
                 {item.name}
               </span>
-            </button>
+            </Link>
           );
         })}
       </nav>

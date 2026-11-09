@@ -1,5 +1,6 @@
 import React from "react";
-import { BookOpen, FileText, ArrowRight, Download, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { BookOpen, FileText, ArrowRight, ExternalLink } from "lucide-react";
 import { MockNote } from "@/data/mockHomeData";
 
 interface RecentNotesProps {
@@ -25,13 +26,13 @@ export function RecentNotes({ notes }: RecentNotesProps) {
           </div>
         </div>
 
-        <button
-          type="button"
-          className="text-xs font-semibold text-indigo hover:text-indigo-hover inline-flex items-center gap-1 transition-colors"
+        <Link
+          href="/notes"
+          className="text-xs font-semibold text-indigo hover:text-indigo-hover inline-flex items-center gap-1 transition-colors group focus-visible:ring-2 focus-visible:ring-indigo rounded"
         >
-          <span>Library</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+          <span>Open Library</span>
+          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </div>
 
       {/* Notes List */}
@@ -57,9 +58,13 @@ export function RecentNotes({ notes }: RecentNotesProps) {
                   </span>
                 </div>
 
-                <h3 className="text-[14px] font-semibold text-navy mt-1 truncate group-hover:text-indigo transition-colors">
+                <Link
+                  href="/notes"
+                  className="text-[14px] font-semibold text-navy mt-1 truncate group-hover:text-indigo transition-colors block"
+                  title="View in Notes Library"
+                >
                   {note.title}
-                </h3>
+                </Link>
 
                 <div className="flex items-center gap-2 mt-1 text-[11px] text-neutral-secondary">
                   <span>{note.fileName}</span>
@@ -71,24 +76,16 @@ export function RecentNotes({ notes }: RecentNotesProps) {
               </div>
             </div>
 
-            {/* Quick Action Button */}
+            {/* Clear Demo File Indicator & Action */}
             <div className="flex items-center gap-1 flex-shrink-0">
-              <button
-                type="button"
-                className="w-8 h-8 rounded-input border border-neutral-border flex items-center justify-center text-neutral-secondary hover:text-navy hover:bg-neutral-light transition-colors"
-                title="Preview PDF"
-                aria-label="Preview PDF"
+              <Link
+                href="/notes"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-input border border-neutral-border text-[11px] font-semibold text-neutral-secondary hover:text-indigo hover:bg-neutral-light transition-colors"
+                title="Illustrative demo file — full PDF viewer active in Notes stage"
               >
-                <ExternalLink className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                className="w-8 h-8 rounded-input border border-neutral-border flex items-center justify-center text-neutral-secondary hover:text-indigo hover:bg-indigo-subtle transition-colors"
-                title="Download PDF"
-                aria-label="Download PDF"
-              >
-                <Download className="w-3.5 h-3.5" />
-              </button>
+                <span>Demo PDF</span>
+                <ExternalLink className="w-3 h-3 text-neutral-secondary" />
+              </Link>
             </div>
           </div>
         ))}

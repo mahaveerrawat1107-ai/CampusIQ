@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Sparkles, Calendar } from "lucide-react";
+import { Sparkles, Calendar, Info } from "lucide-react";
 
 interface DashboardHeaderProps {
   studentName: string;
@@ -34,25 +34,30 @@ export function DashboardHeader({ studentName }: DashboardHeaderProps) {
   }, []);
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-neutral-border/60">
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-indigo flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Academic Overview</span>
-          </span>
+    <div className="space-y-3 pb-2 border-b border-neutral-border/60">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-semibold uppercase tracking-wider text-indigo flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Academic Overview</span>
+            </span>
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-neutral-light border border-neutral-border text-neutral-secondary">
+              Illustrative Demo Data
+            </span>
+          </div>
+          <h1 className="text-[26px] sm:text-[28px] font-bold text-navy tracking-tight leading-tight">
+            {greeting}, {studentName}
+          </h1>
+          <p className="text-[14px] text-neutral-secondary mt-1">
+            Here is your academic progress and upcoming deadlines for today.
+          </p>
         </div>
-        <h1 className="text-[26px] sm:text-[28px] font-bold text-navy tracking-tight leading-tight">
-          {greeting}, {studentName}
-        </h1>
-        <p className="text-[14px] text-neutral-secondary mt-1">
-          Here is your academic progress and upcoming deadlines for today.
-        </p>
-      </div>
 
-      <div className="self-start sm:self-center flex items-center gap-2 px-3.5 py-1.5 rounded-input bg-surface border border-neutral-border text-xs font-medium text-neutral-secondary shadow-card">
-        <Calendar className="w-4 h-4 text-neutral-secondary" />
-        <span>{formattedDate}</span>
+        <div className="self-start sm:self-center flex items-center gap-2 px-3.5 py-1.5 rounded-input bg-surface border border-neutral-border text-xs font-medium text-neutral-secondary shadow-card">
+          <Calendar className="w-4 h-4 text-neutral-secondary" />
+          <span>{formattedDate}</span>
+        </div>
       </div>
     </div>
   );

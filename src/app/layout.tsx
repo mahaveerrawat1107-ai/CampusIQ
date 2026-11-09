@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
+import { AppShell } from "@/components/layout/AppShell";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -30,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={manrope.variable}>
       <body className="min-h-screen bg-background font-sans text-navy antialiased">
-        {children}
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

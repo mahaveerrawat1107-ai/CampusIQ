@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { ClipboardList, BookOpen, ArrowRight } from "lucide-react";
 
 interface QuickStatsCardsProps {
@@ -38,13 +39,13 @@ export function QuickStatsCards({
         </div>
 
         <div className="mt-4 pt-3 border-t border-neutral-border">
-          <button
-            type="button"
-            className="w-full flex items-center justify-between text-xs font-semibold text-neutral-secondary hover:text-indigo transition-colors"
+          <Link
+            href="/assignments"
+            className="w-full flex items-center justify-between text-xs font-semibold text-neutral-secondary hover:text-indigo transition-colors group focus-visible:ring-2 focus-visible:ring-indigo rounded"
           >
             <span>Track assignments</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
         </div>
       </div>
 
@@ -74,13 +75,13 @@ export function QuickStatsCards({
         </div>
 
         <div className="mt-4 pt-3 border-t border-neutral-border">
-          <button
-            type="button"
-            className="w-full flex items-center justify-between text-xs font-semibold text-neutral-secondary hover:text-indigo transition-colors"
+          <Link
+            href="/notes"
+            className="w-full flex items-center justify-between text-xs font-semibold text-neutral-secondary hover:text-indigo transition-colors group focus-visible:ring-2 focus-visible:ring-indigo rounded"
           >
             <span>Browse notes</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
         </div>
       </div>
     </div>
