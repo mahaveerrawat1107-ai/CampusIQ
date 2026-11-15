@@ -1,8 +1,20 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import Link from "next/link";
-import { ClipboardList, ArrowLeft, Clock } from "lucide-react";
+import {
+  ClipboardList,
+  Plus,
+  ArrowLeft,
+  Sparkles,
+} from "lucide-react";
+import { AssignmentStatsCards } from "@/components/assignments/AssignmentStatsCards";
+import { AssignmentList } from "@/components/assignments/AssignmentList";
+import { AssignmentFormModal } from "@/components/assignments/AssignmentFormModal";
 
 export default function AssignmentsPage() {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -11,61 +23,65 @@ export default function AssignmentsPage() {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-semibold uppercase tracking-wider text-indigo flex items-center gap-1.5">
               <ClipboardList className="w-3.5 h-3.5" />
-              <span>Module: Assignments</span>
+              <span>Academic Workspace</span>
+            </span>
+            <span className="text-neutral-border text-xs">•</span>
+            <span className="text-xs text-neutral-secondary font-medium">
+              1st Year CSE (Semester 1)
             </span>
           </div>
           <h1 className="text-[26px] sm:text-[28px] font-bold text-navy tracking-tight leading-tight">
-            Assignment Tracker
+            Assignments
           </h1>
-          <p className="text-[14px] text-neutral-secondary mt-1">
-            Track deadlines, priority indicators, and personal completion status.
+          <p className="text-[13px] sm:text-[14px] text-neutral-secondary mt-1">
+            Organize course deadlines, prioritize pending tasks, and track personal completion.
           </p>
         </div>
 
-        <Link
-          href="/"
-          className="self-start sm:self-center inline-flex items-center gap-2 px-3.5 py-2 rounded-input bg-surface border border-neutral-border text-xs font-semibold text-navy hover:text-indigo hover:border-indigo/40 transition-colors shadow-card"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Home</span>
-        </Link>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2.5 self-start sm:self-center flex-shrink-0">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-input bg-surface border border-neutral-border text-xs font-semibold text-navy hover:text-indigo hover:border-indigo/40 transition-colors shadow-card"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Back to</span> Dashboard
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-input bg-indigo text-white text-xs font-semibold hover:bg-indigo-hover transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Assignment</span>
+          </button>
+        </div>
       </div>
 
-      {/* Feature In Progress Card */}
-      <div className="bg-surface rounded-card border border-neutral-border p-8 shadow-card max-w-2xl">
-        <div className="w-12 h-12 rounded-card-sm bg-indigo-subtle text-indigo flex items-center justify-center mb-5">
-          <ClipboardList className="w-6 h-6" />
+      {/* A. Assignment Dashboard Summary Stats Cards */}
+      <section aria-label="Assignment Overview Statistics">
+        <AssignmentStatsCards />
+      </section>
+
+      {/* B. Assignment List with Search, Filters & Interactive Cards */}
+      <section aria-label="Assignment List and Filters">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-[16px] font-bold text-navy">
+            All Course Assignments
+          </h2>
+          <span className="text-xs text-neutral-secondary font-medium">
+            Pre-calibrated for UIT RGPV Shivpuri
+          </span>
         </div>
+        <AssignmentList />
+      </section>
 
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-neutral-light text-neutral-secondary border border-neutral-border mb-3">
-          <Clock className="w-3.5 h-3.5" />
-          <span>Stage 3 Feature • Development in Progress</span>
-        </div>
-
-        <h2 className="text-[18px] font-bold text-navy mb-2">
-          Assignment List & Submission Status
-        </h2>
-        <p className="text-[14px] text-neutral-secondary leading-relaxed mb-6">
-          This module will organize your course assignments by subject, priority, and due dates, allowing you to maintain your own completion progress.
-        </p>
-
-        <div className="p-4 rounded-input bg-neutral-light border border-neutral-border mb-6 space-y-2 text-xs">
-          <div className="font-semibold text-navy">Planned Capabilities:</div>
-          <ul className="list-disc list-inside text-neutral-secondary space-y-1">
-            <li>Filter by Upcoming, Due Soon, Completed, and Overdue tasks.</li>
-            <li>Subject tagging and assignment description view.</li>
-            <li>Student-controlled personal completed checkbox.</li>
-          </ul>
-        </div>
-
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-input bg-indigo text-white text-xs font-semibold hover:bg-indigo-hover transition-colors shadow-sm"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Return to Dashboard</span>
-        </Link>
-      </div>
+      {/* Create Assignment Modal */}
+      <AssignmentFormModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </div>
   );
 }

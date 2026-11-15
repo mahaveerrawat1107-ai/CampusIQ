@@ -53,10 +53,24 @@ The student application consists of **five primary navigation destinations**, pl
 - Interactive "What-If" 75% scenario simulator.
 - Home Dashboard attendance card always synchronized with Attendance page via shared `useAttendance()`.
 
-### 3. Assignments (Stage 3 Scaffold)
-- Filterable by status: Pending, Completed, Due Soon, Overdue.
-- Details: Subject, title, due date, description, optional attachment.
-- Personal completion tracking.
+### 3. Assignments — *Stage 3 Implemented & Verified*
+- Centralized `AssignmentsContext` managing assignment state with browser-safe `localStorage` persistence (`campusiq_assignments_v1`).
+- Comprehensive CRUD:
+  - Create new assignment with client-side form validation and double-click submission prevention.
+  - Edit existing assignment in modal dialog.
+  - Delete assignment with explicit confirmation modal.
+  - Personal completion toggle (Pending ↔ Completed) directly from card or Home dashboard.
+  - Subject selection strictly mapped to 1st Year CSE catalogue (`PILOT_SUBJECTS`).
+  - Priority levels: High, Medium, Low with distinct visual status tokens.
+  - Due date validation (`dueDate >= assignedDate`).
+  - Overdue logic: strictly derived from pending status and past due date. A completed assignment is never marked overdue.
+- Assignment Dashboard Statistics: Total, Pending, Completed, Overdue counters.
+- Filter and search: Search by title, filter by subject, filter by status, filter by priority, sort by nearest due date.
+- Real-time Home Dashboard Synchronization:
+  - Pending assignment count on Quick Stats card reflects live assignments context.
+  - Upcoming Assignments preview displays top 3 pending assignments sorted by nearest due date.
+  - Accurate footer link indicator ("Showing X of Y pending assignments").
+- Seed dataset: 5 realistic 1st Year CSE assignments calibrated for UIT RGPV Shivpuri (4 pending, 1 completed).
 
 ### 4. Notes Library (Stage 4 Scaffold)
 - Academic hierarchy: **Semester → Subject → Unit → PDF**.
@@ -103,4 +117,13 @@ The student application consists of **five primary navigation destinations**, pl
   - History UX: removed max-h scroll, Load More pagination (10 per page), filter-aware count reset.
   - Build verified: 8/8 static routes, 0 TypeScript errors.
   - Server probed: Home 82% ✓, Attendance BT-106 ✓, English for Communication ✓, Attendance 82% ✓.
-- **Next Milestone:** Stage 3 — Assignment Management System (awaiting user approval).
+- **Stage 3 — Assignment Management System:** Completed.
+  - Full CRUD operations with modal interfaces (Create, Edit, Delete with confirmation).
+  - Personal completion toggles (Pending ↔ Completed) with single-click interaction.
+  - Integrated with 1st Year CSE subject catalogue (`PILOT_SUBJECTS`).
+  - Validations: Title required, subject required, priority required, `dueDate >= assignedDate`, double-click protection.
+  - Filterable by title search, subject, status (All, Pending, Completed, Overdue), priority, sort by nearest due date.
+  - Overdue calculation verified: Completed is never overdue.
+  - Synchronized with Home Dashboard: Quick stats counter and upcoming assignments preview (top 3 pending).
+  - Local browser persistence with SSR-safe hydration (`campusiq_assignments_v1`).
+- **Next Milestone:** Stage 4 — Notes Library (awaiting user approval).

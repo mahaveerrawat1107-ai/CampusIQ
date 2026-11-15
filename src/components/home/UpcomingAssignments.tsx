@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import {
@@ -6,15 +8,17 @@ import {
   Clock,
   ArrowRight,
   Circle,
+  CheckCircle2,
+  Check,
 } from "lucide-react";
-import { MockAssignment } from "@/data/mockHomeData";
+import { useAssignments } from "@/context/AssignmentsContext";
+import { formatDisplayDate, getDueStatusText, isAssignmentOverdue } from "@/lib/assignmentUtils";
+import { AssignmentPriority } from "@/types/assignment";
 
-interface UpcomingAssignmentsProps {
-  assignments: MockAssignment[];
-}
+export function UpcomingAssignments() {
+  const { upcomingPendingAssignments, stats, toggleAssignmentStatus } = useAssignments();
 
-export function UpcomingAssignments({ assignments }: UpcomingAssignmentsProps) {
-  const getPriorityBadge = (priority: MockAssignment["priority"]) => {
+  const getPriorityBadge = (priority: AssignmentPriority) => {
     switch (priority) {
       case "High":
         return (
@@ -68,70 +72,114 @@ export function UpcomingAssignments({ assignments }: UpcomingAssignmentsProps) {
         </Link>
       </div>
 
-      {/* Assignment List (Previews top 3) */}
-      <div className="divide-y divide-neutral-border/70">
-        {assignments.map((item) => (
-          <div
-            key={item.id}
-            className="py-4 first:pt-4 last:pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 group"
+      {/* Assignment List */}
+      {upcomingPendingAssignments.length === 0 ? (
+        <div className="py-10 text-center">
+          <div className="w-10 h-10 rounded-full bg-semantic-success-subtle text-semantic-success flex items-center justify-center mx-auto mb-2.5">
+            <Check className="w-5 h-5" />
+          </div>
+          <h3 className="text-sm font-bold text-navy">All caught up!</h3>
+          <p className="text-xs text-neutral-secondary mt-1">
+            You have no pending assignments right now.
+          </p>
+          <Link
+            href="/assignments"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-indigo hover:text-indigo-hover mt-3"
           >
-            {/* Left Info */}
-            <div className="flex items-start gap-3">
-              <span
-                className="mt-0.5 w-5 h-5 rounded border border-neutral-border flex items-center justify-center text-neutral-secondary"
-                title="Personal completion status (Pending)"
-                aria-label="Pending assignment"
-              >
-                <Circle className="w-3.5 h-3.5 text-neutral-border" />
-              </span>
+            <span>Open Assignments Tracker</span>
+            <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
+      ) : (
+        <div className="divide-y divide-neutral-border/70">
+          {upcomingPendingAssignments.map((item) => {
+            const dueInfo = getDueStatusText(item);
+            const isOverdue = isAssignmentOverdue(item);
 
-              <div>
-                <Link
-                  href="/assignments"
-                  className="text-[14px] font-semibold text-navy hover:text-indigo transition-colors leading-snug block"
-                >
-                  {item.title}
-                </Link>
-                <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-neutral-secondary">
-                  <span className="font-semibold text-navy">
-                    {item.subject}
-                  </span>
-                  <span>•</span>
-                  <span className="inline-flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-neutral-secondary" />
-                    <span>{item.dueDate}</span>
-                  </span>
-                  <span>•</span>
-                  <span className="inline-flex items-center gap-1 font-medium text-navy">
-                    <Clock className="w-3 h-3 text-neutral-secondary" />
-                    <span>{item.daysRemaining}</span>
+            return (
+              <div
+                key={item.id}
+                className="py-4 first:pt-4 last:pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 group"
+              >
+                {/* Left Info */}
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => toggleAssignmentStatus(item.id)}
+                    className="mt-0.5 w-5 h-5 rounded border border-neutral-border flex items-center justify-center text-neutral-secondary hover:text-semantic-success hover:border-semantic-success transition-colors flex-shrink-0"
+                    title="Mark as completed"
+                    aria-label={`Mark ${item.title} as completed`}
+                  >
+                    <Circle className="w-3.5 h-3.5 text-neutral-border group-hover:text-neutral-secondary" />
+                  </button>
+
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      href="/assignments"
+                      className="text-[14px] font-semibold text-navy hover:text-indigo transition-colors leading-snug block truncate"
+                    >
+                      {item.title}
+                    </Link>
+                    <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-neutral-secondary">
+                      <span className="font-semibold text-navy">
+                        {item.subjectName}
+                      </span>
+                      <span>•</span>
+                      <span className="inline-flex items-center gap-1">
+                        <Calendar className="w-3 h-3 text-neutral-secondary" />
+                        <span>{formatDisplayDate(item.dueDate)}</span>
+                      </span>
+                      <span>•</span>
+                      <span
+                        className={`inline-flex items-center gap-1 font-medium ${
+                          isOverdue ? "text-semantic-error" : "text-navy"
+                        }`}
+                      >
+                        <Clock className="w-3 h-3 text-neutral-secondary" />
+                        <span>{dueInfo.text}</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Meta Badges */}
+                <div className="flex items-center gap-2 self-start sm:self-center pl-8 sm:pl-0 flex-shrink-0">
+                  {getPriorityBadge(item.priority)}
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-neutral-light text-neutral-secondary border border-neutral-border">
+                    {item.status}
                   </span>
                 </div>
               </div>
-            </div>
+            );
+          })}
+        </div>
+      )}
 
-            {/* Right Meta Badges */}
-            <div className="flex items-center gap-2 self-start sm:self-center pl-8 sm:pl-0">
-              {getPriorityBadge(item.priority)}
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-neutral-light text-neutral-secondary border border-neutral-border">
-                {item.status}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Understandable 4th Assignment Explanation & Link */}
-      <div className="mt-4 pt-3.5 border-t border-neutral-border flex items-center justify-between text-xs text-neutral-secondary">
-        <span>Showing 3 of 4 pending assignments</span>
-        <Link
-          href="/assignments"
-          className="font-semibold text-indigo hover:text-indigo-hover inline-flex items-center gap-1"
-        >
-          <span>See 1 more in Assignments</span>
-          <ArrowRight className="w-3 h-3" />
-        </Link>
-      </div>
+      {/* Footer count indicator */}
+      {upcomingPendingAssignments.length > 0 && (
+        <div className="mt-4 pt-3.5 border-t border-neutral-border flex items-center justify-between text-xs text-neutral-secondary">
+          <span>
+            Showing {Math.min(3, stats.pending)} of {stats.pending} pending assignment
+            {stats.pending !== 1 ? "s" : ""}
+          </span>
+          <Link
+            href="/assignments"
+            className="font-semibold text-indigo hover:text-indigo-hover inline-flex items-center gap-1"
+          >
+            {stats.pending > 3 ? (
+              <>
+                <span>See {stats.pending - 3} more in Assignments</span>
+                <ArrowRight className="w-3 h-3" />
+              </>
+            ) : (
+              <>
+                <span>Manage in Assignments</span>
+                <ArrowRight className="w-3 h-3" />
+              </>
+            )}
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

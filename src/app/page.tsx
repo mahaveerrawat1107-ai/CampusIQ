@@ -7,7 +7,6 @@ import { QuickActions } from "@/components/home/QuickActions";
 import {
   mockStudent,
   mockQuickStats,
-  mockUpcomingAssignments,
   mockRecentNotes,
 } from "@/data/mockHomeData";
 
@@ -27,7 +26,6 @@ export default function HomePage() {
         {/* C. Quick Statistics (5 cols on large desktop) */}
         <div className="lg:col-span-5 flex flex-col justify-between">
           <QuickStatsCards
-            pendingAssignments={mockQuickStats.pendingAssignments}
             newNotesCount={mockQuickStats.newNotesCount}
           />
         </div>
@@ -37,7 +35,7 @@ export default function HomePage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* D. Upcoming Assignments */}
         <div className="lg:col-span-7">
-          <UpcomingAssignments assignments={mockUpcomingAssignments} />
+          <UpcomingAssignments />
         </div>
 
         {/* E. Recent Notes */}
