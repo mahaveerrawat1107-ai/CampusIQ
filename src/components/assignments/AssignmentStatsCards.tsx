@@ -5,7 +5,7 @@ import { ClipboardList, Clock, CheckCircle2, AlertCircle, RotateCcw } from "luci
 import { useAssignments } from "@/context/AssignmentsContext";
 
 export function AssignmentStatsCards() {
-  const { stats, resetToDefaultSeed } = useAssignments();
+  const { studentStats, resetToDefaultSeed } = useAssignments();
 
   return (
     <div className="space-y-3">
@@ -20,7 +20,7 @@ export function AssignmentStatsCards() {
               </span>
               <div className="mt-1.5 flex items-baseline gap-2">
                 <span className="text-[28px] sm:text-[32px] font-bold text-navy leading-none tabular-nums">
-                  {stats.total}
+                  {studentStats.total}
                 </span>
                 <span className="text-[11px] font-medium text-neutral-secondary">
                   tasks
@@ -32,7 +32,7 @@ export function AssignmentStatsCards() {
             </div>
           </div>
           <p className="text-[11px] text-neutral-secondary mt-3 pt-2.5 border-t border-neutral-border/70">
-            All course assignments
+            Published course tasks
           </p>
         </div>
 
@@ -45,7 +45,7 @@ export function AssignmentStatsCards() {
               </span>
               <div className="mt-1.5 flex items-baseline gap-2">
                 <span className="text-[28px] sm:text-[32px] font-bold text-semantic-warning leading-none tabular-nums">
-                  {stats.pending}
+                  {studentStats.pending}
                 </span>
                 <span className="text-[10px] sm:text-[11px] font-semibold text-semantic-warning bg-semantic-warning-subtle px-1.5 py-0.5 rounded-full">
                   Action required
@@ -70,7 +70,7 @@ export function AssignmentStatsCards() {
               </span>
               <div className="mt-1.5 flex items-baseline gap-2">
                 <span className="text-[28px] sm:text-[32px] font-bold text-semantic-success leading-none tabular-nums">
-                  {stats.completed}
+                  {studentStats.completed}
                 </span>
                 <span className="text-[10px] sm:text-[11px] font-semibold text-semantic-success bg-semantic-success-subtle px-1.5 py-0.5 rounded-full">
                   Done
@@ -96,12 +96,12 @@ export function AssignmentStatsCards() {
               <div className="mt-1.5 flex items-baseline gap-2">
                 <span
                   className={`text-[28px] sm:text-[32px] font-bold leading-none tabular-nums ${
-                    stats.overdue > 0 ? "text-semantic-error" : "text-navy"
+                    studentStats.overdue > 0 ? "text-semantic-error" : "text-navy"
                   }`}
                 >
-                  {stats.overdue}
+                  {studentStats.overdue}
                 </span>
-                {stats.overdue > 0 ? (
+                {studentStats.overdue > 0 ? (
                   <span className="text-[10px] sm:text-[11px] font-semibold text-semantic-error bg-semantic-error-subtle px-1.5 py-0.5 rounded-full">
                     Past due
                   </span>
@@ -114,7 +114,7 @@ export function AssignmentStatsCards() {
             </div>
             <div
               className={`w-9 h-9 rounded-input flex items-center justify-center flex-shrink-0 ${
-                stats.overdue > 0
+                studentStats.overdue > 0
                   ? "bg-semantic-error-subtle text-semantic-error"
                   : "bg-neutral-light text-neutral-secondary"
               }`}
@@ -128,10 +128,10 @@ export function AssignmentStatsCards() {
         </div>
       </div>
 
-      {/* Demo helper info bar */}
+      {/* Student notice bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-1 text-xs text-neutral-secondary">
         <span>
-          <strong>Note:</strong> Completion status is personal tracking for your own study workflow and does not signify teacher portal submission.
+          <strong>Academic Student Workspace:</strong> Assignments are published by course faculty. Marking an item as completed helps organize your personal study workflow.
         </span>
         <button
           type="button"

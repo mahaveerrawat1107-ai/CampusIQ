@@ -53,24 +53,32 @@ The student application consists of **five primary navigation destinations**, pl
 - Interactive "What-If" 75% scenario simulator.
 - Home Dashboard attendance card always synchronized with Attendance page via shared `useAttendance()`.
 
-### 3. Assignments — *Stage 3 Implemented & Verified*
-- Centralized `AssignmentsContext` managing assignment state with browser-safe `localStorage` persistence (`campusiq_assignments_v1`).
-- Comprehensive CRUD:
-  - Create new assignment with client-side form validation and double-click submission prevention.
-  - Edit existing assignment in modal dialog.
-  - Delete assignment with explicit confirmation modal.
-  - Personal completion toggle (Pending ↔ Completed) directly from card or Home dashboard.
-  - Subject selection strictly mapped to 1st Year CSE catalogue (`PILOT_SUBJECTS`).
-  - Priority levels: High, Medium, Low with distinct visual status tokens.
-  - Due date validation (`dueDate >= assignedDate`).
-  - Overdue logic: strictly derived from pending status and past due date. A completed assignment is never marked overdue.
-- Assignment Dashboard Statistics: Total, Pending, Completed, Overdue counters.
-- Filter and search: Search by title, filter by subject, filter by status, filter by priority, sort by nearest due date.
-- Real-time Home Dashboard Synchronization:
-  - Pending assignment count on Quick Stats card reflects live assignments context.
-  - Upcoming Assignments preview displays top 3 pending assignments sorted by nearest due date.
-  - Accurate footer link indicator ("Showing X of Y pending assignments").
-- Seed dataset: 5 realistic 1st Year CSE assignments calibrated for UIT RGPV Shivpuri (4 pending, 1 completed).
+### 3. Assignments — *Stage 3 Implemented & Workflow Corrected*
+- **Role-Appropriate Workflow:**
+  - Course assignments are created, edited, and published by faculty/instructors.
+  - Students view published coursework on `/assignments` and manage their personal completion status. Students cannot create, modify, or delete course assignments.
+- **Staff Assignment Management Prototype (`/admin/assignments`):**
+  - Interactive prototype of authorized faculty interface (local storage based, clearly documented as prototype before full auth/RBAC).
+  - Create, edit, and delete assignments with subject selection (`PILOT_SUBJECTS`), priority levels, assigned & due dates, and publication status (Published vs Draft).
+  - Instant publish / unpublish toggle. Unpublished assignments are strictly hidden from students.
+  - Multi-file attachment uploader for PDFs, JPG, PNG, and WEBP files (validated up to 10 MB).
+- **Assignment Attachments & Storage:**
+  - Binary attachment blobs stored safely in client-side IndexedDB (`campusiq_attachments_db`), avoiding localStorage quota limits.
+  - Full document previews: modal PDF viewer and responsive Image modal with zoom controls (50% to 300%) and fullscreen viewing.
+  - Direct download actions with authentic filename and MIME type handling.
+  - Clean empty state when no attachments exist.
+- **Decoupled Data Architecture:**
+  - Staff assignment catalog (`campusiq_assignments_catalog_v2`) is separate from student personal completion records (`campusiq_student_status_v2`).
+  - Editing or re-publishing an assignment preserves existing student completion progress.
+- **Student Assignment Tracker (`/assignments`):**
+  - KPI Statistics: Total, Pending, Completed, Overdue counters derived strictly from published assignments.
+  - Search by title, filter by subject, filter by status, filter by priority, sort by nearest due date.
+  - One-click completion status toggle (Pending ↔ Completed).
+  - Mathematically verified overdue detection: completed assignments are never marked overdue.
+- **Real-Time Home Dashboard Synchronization:**
+  - Pending assignment count on Quick Stats card reflects live published assignments context.
+  - Upcoming Assignments preview displays top 3 pending published assignments sorted by nearest due date.
+  - Never shows draft or unpublished assignments to students.
 
 ### 4. Notes Library (Stage 4 Scaffold)
 - Academic hierarchy: **Semester → Subject → Unit → PDF**.
@@ -117,13 +125,13 @@ The student application consists of **five primary navigation destinations**, pl
   - History UX: removed max-h scroll, Load More pagination (10 per page), filter-aware count reset.
   - Build verified: 8/8 static routes, 0 TypeScript errors.
   - Server probed: Home 82% ✓, Attendance BT-106 ✓, English for Communication ✓, Attendance 82% ✓.
-- **Stage 3 — Assignment Management System:** Completed.
-  - Full CRUD operations with modal interfaces (Create, Edit, Delete with confirmation).
-  - Personal completion toggles (Pending ↔ Completed) with single-click interaction.
-  - Integrated with 1st Year CSE subject catalogue (`PILOT_SUBJECTS`).
-  - Validations: Title required, subject required, priority required, `dueDate >= assignedDate`, double-click protection.
-  - Filterable by title search, subject, status (All, Pending, Completed, Overdue), priority, sort by nearest due date.
-  - Overdue calculation verified: Completed is never overdue.
-  - Synchronized with Home Dashboard: Quick stats counter and upcoming assignments preview (top 3 pending).
-  - Local browser persistence with SSR-safe hydration (`campusiq_assignments_v1`).
+- **Stage 3 — Assignment Management System (Workflow Corrected):** Completed.
+  - Role separation: Students view and track personal completion; teachers/staff publish and manage assignments.
+  - Student page `/assignments`: removed student creation/editing/deletion; retains KPI stats, filters, search, due date sorting, and interactive completion tracking.
+  - Staff management prototype `/admin/assignments`: complete creation, editing, deletion with confirmation, draft/published visibility toggle, and multi-file attachment management.
+  - Attachment support: PDF, JPG, PNG, WEBP with client-side IndexedDB blob storage (`campusiq_attachments_db`), avoiding localStorage quota limits.
+  - Interactive previews: Dedicated PDF modal viewer and Image modal with zoom controls (50% to 300%) and direct download triggers.
+  - Decoupled storage: Student completion statuses (`campusiq_student_status_v2`) decoupled from staff assignment definitions (`campusiq_assignments_catalog_v2`).
+  - Home Dashboard synchronized: only published pending assignments shown (top 3) and counted. Draft assignments hidden.
+  - Verified with 9/9 static pages compilation and live HTTP probe tests.
 - **Next Milestone:** Stage 4 — Notes Library (awaiting user approval).

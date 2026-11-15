@@ -1,18 +1,44 @@
-import { Assignment } from "@/types/assignment";
+import { Assignment, StudentAssignmentRecord } from "@/types/assignment";
+import { createSamplePdfDataUrl, createSampleImageDataUrl } from "@/lib/attachmentStorage";
 
 export const SEED_ASSIGNMENTS: Assignment[] = [
   {
     id: "asg-1",
     title: "Engineering Chemistry Lab Report & Analysis",
-    description: "Complete laboratory observation table, calculations for hardness of water, and answer post-lab questions for experiment 4.",
+    description: "Complete laboratory observation table, calculations for EDTA hardness of water, and answer post-lab questions for experiment 4.",
     subjectId: "sub-bt101",
     subjectName: "Engineering Chemistry",
     subjectCode: "BT-101",
     assignedDate: "2026-11-05",
     dueDate: "2026-11-18",
     priority: "High",
-    status: "Pending",
+    isPublished: true,
+    createdBy: "Dr. P.K. Mishra (Dept. of Chemistry)",
     createdAt: "2026-11-05T10:00:00.000Z",
+    attachments: [
+      {
+        id: "att-1a",
+        name: "BT101_Exp4_WaterHardness_LabManual.pdf",
+        fileType: "pdf",
+        mimeType: "application/pdf",
+        fileSize: 1468006,
+        fileSizeFormatted: "1.4 MB",
+        uploadedAt: "2026-11-05T10:05:00.000Z",
+        storageKey: "att_blob_asg1_1",
+        dataUrl: createSamplePdfDataUrl("BT-101", "Experiment 4: Hardness of Water by EDTA Method"),
+      },
+      {
+        id: "att-1b",
+        name: "EDTA_Titration_Setup_Diagram.png",
+        fileType: "image",
+        mimeType: "image/png",
+        fileSize: 870400,
+        fileSizeFormatted: "850 KB",
+        uploadedAt: "2026-11-05T10:07:00.000Z",
+        storageKey: "att_blob_asg1_2",
+        dataUrl: createSampleImageDataUrl("BT-101", "EDTA Titration Apparatus Setup"),
+      },
+    ],
   },
   {
     id: "asg-2",
@@ -24,8 +50,22 @@ export const SEED_ASSIGNMENTS: Assignment[] = [
     assignedDate: "2026-11-08",
     dueDate: "2026-11-21",
     priority: "Medium",
-    status: "Pending",
+    isPublished: true,
+    createdBy: "Prof. S. Verma (Dept. of Electrical Eng.)",
     createdAt: "2026-11-08T11:30:00.000Z",
+    attachments: [
+      {
+        id: "att-2a",
+        name: "Unit1_Thevenin_Theorems_ProblemSet.pdf",
+        fileType: "pdf",
+        mimeType: "application/pdf",
+        fileSize: 2202009,
+        fileSizeFormatted: "2.1 MB",
+        uploadedAt: "2026-11-08T11:35:00.000Z",
+        storageKey: "att_blob_asg2_1",
+        dataUrl: createSamplePdfDataUrl("BT-104", "Unit 1: Thevenin and Superposition Network Theorems"),
+      },
+    ],
   },
   {
     id: "asg-3",
@@ -37,8 +77,22 @@ export const SEED_ASSIGNMENTS: Assignment[] = [
     assignedDate: "2026-11-10",
     dueDate: "2026-11-25",
     priority: "Low",
-    status: "Pending",
+    isPublished: true,
+    createdBy: "Dr. A. Gupta (Dept. of Applied Mathematics)",
     createdAt: "2026-11-10T14:15:00.000Z",
+    attachments: [
+      {
+        id: "att-3a",
+        name: "Matrix_Eigenvalues_Theorem_Notes.pdf",
+        fileType: "pdf",
+        mimeType: "application/pdf",
+        fileSize: 1024000,
+        fileSizeFormatted: "1.0 MB",
+        uploadedAt: "2026-11-10T14:20:00.000Z",
+        storageKey: "att_blob_asg3_1",
+        dataUrl: createSamplePdfDataUrl("BT-102", "Linear Algebra: Eigenvalues and Cayley-Hamilton"),
+      },
+    ],
   },
   {
     id: "asg-4",
@@ -50,8 +104,22 @@ export const SEED_ASSIGNMENTS: Assignment[] = [
     assignedDate: "2026-11-02",
     dueDate: "2026-11-28",
     priority: "Medium",
-    status: "Pending",
+    isPublished: true,
+    createdBy: "Er. M. Singh (Mechanical Workshop)",
     createdAt: "2026-11-02T09:00:00.000Z",
+    attachments: [
+      {
+        id: "att-4a",
+        name: "Orthographic_Views_Drawing_Sheet.png",
+        fileType: "image",
+        mimeType: "image/png",
+        fileSize: 1887436,
+        fileSizeFormatted: "1.8 MB",
+        uploadedAt: "2026-11-02T09:10:00.000Z",
+        storageKey: "att_blob_asg4_1",
+        dataUrl: createSampleImageDataUrl("BT-105", "Orthographic Projection Component Reference"),
+      },
+    ],
   },
   {
     id: "asg-5",
@@ -63,7 +131,45 @@ export const SEED_ASSIGNMENTS: Assignment[] = [
     assignedDate: "2026-11-01",
     dueDate: "2026-11-12",
     priority: "Low",
-    status: "Completed",
+    isPublished: true,
+    createdBy: "Dr. N. Roy (Dept. of Humanities)",
     createdAt: "2026-11-01T16:00:00.000Z",
+    attachments: [
+      {
+        id: "att-5a",
+        name: "Technical_Presentation_Rubric.pdf",
+        fileType: "pdf",
+        mimeType: "application/pdf",
+        fileSize: 634880,
+        fileSizeFormatted: "620 KB",
+        uploadedAt: "2026-11-01T16:05:00.000Z",
+        storageKey: "att_blob_asg5_1",
+        dataUrl: createSamplePdfDataUrl("BT-106", "Oral Presentation Evaluation Rubric"),
+      },
+    ],
+  },
+  {
+    id: "asg-6",
+    title: "Spectroscopic Techniques & UV-Vis Absorption",
+    description: "Prepare pre-reading notes on Beer-Lambert law and instrumentation of UV-Visible spectrophotometer.",
+    subjectId: "sub-bt101",
+    subjectName: "Engineering Chemistry",
+    subjectCode: "BT-101",
+    assignedDate: "2026-11-14",
+    dueDate: "2026-12-05",
+    priority: "Medium",
+    isPublished: false, // DRAFT / UNPUBLISHED
+    createdBy: "Dr. P.K. Mishra (Dept. of Chemistry)",
+    createdAt: "2026-11-14T17:00:00.000Z",
+    attachments: [],
+  },
+];
+
+export const SEED_STUDENT_STATUSES: StudentAssignmentRecord[] = [
+  {
+    assignmentId: "asg-5",
+    studentId: "std-alex",
+    isCompleted: true,
+    completedAt: "2026-11-11T18:00:00.000Z",
   },
 ];

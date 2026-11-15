@@ -3,17 +3,13 @@
 import React, { useState, useMemo } from "react";
 import {
   Search,
-  Filter,
   ArrowUpDown,
-  ClipboardList,
   X,
   Layers,
 } from "lucide-react";
-import { Assignment, AssignmentPriority } from "@/types/assignment";
+import { AssignmentPriority } from "@/types/assignment";
 import { useAssignments } from "@/context/AssignmentsContext";
 import { AssignmentCard } from "./AssignmentCard";
-import { AssignmentFormModal } from "./AssignmentFormModal";
-import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { isAssignmentOverdue } from "@/lib/assignmentUtils";
 
 type StatusFilter = "all" | "Pending" | "Completed" | "Overdue";
@@ -21,7 +17,7 @@ type PriorityFilter = "all" | AssignmentPriority;
 type SortOption = "nearest_due" | "furthest_due" | "priority_high" | "title_asc";
 
 export function AssignmentList() {
-  const { assignments, subjects, toggleAssignmentStatus, deleteAssignment } =
+  const { publishedAssignments, subjects, isStudentCompleted, toggleStudentCompletion } =
     useAssignments();
 
   // Filter & Search states
@@ -31,13 +27,6 @@ export function AssignmentList() {
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all");
   const [sortBy, setSortBy] = useState<SortOption>("nearest_due");
 
-  // Modal states
-  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-  const [deletingAssignment, setDeletingAssignment] = useState<Assignment | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
   const priorityWeights: Record<AssignmentPriority, number> = {
     High: 3,
     Medium: 2,
@@ -46,7 +35,7 @@ export function AssignmentList() {
 
   // Filtered & Sorted list
   const filteredAssignments = useMemo(() => {
-    return assignments
+    return publishedAssignments
       .filter((item) => {
         // Search query filter (title)
         if (
@@ -61,14 +50,17 @@ export function AssignmentList() {
           return false;
         }
 
-        // Status filter
-        if (statusFilter === "Pending" && item.status !== "Pending") {
+        // Status filter (based on student completion)
+        const isDone = isStudentCompleted(item.id);
+        const isOverdue = isAssignmentOverdue(item.dueDate, isDone);
+
+        if (statusFilter === "Pending" && (isDone || isOverdue)) {
           return false;
         }
-        if (statusFilter === "Completed" && item.status !== "Completed") {
+        if (statusFilter === "Completed" && !isDone) {
           return false;
         }
-        if (statusFilter === "Overdue" && !isAssignmentOverdue(item)) {
+        if (statusFilter === "Overdue" && !isOverdue) {
           return false;
         }
 
@@ -94,12 +86,13 @@ export function AssignmentList() {
         }
       });
   }, [
-    assignments,
+    publishedAssignments,
     searchQuery,
     subjectFilter,
     statusFilter,
     priorityFilter,
     sortBy,
+    isStudentCompleted,
   ]);
 
   const hasActiveFilters =
@@ -114,16 +107,6 @@ export function AssignmentList() {
     setStatusFilter("all");
     setPriorityFilter("all");
     setSortBy("nearest_due");
-  };
-
-  const handleEdit = (assignment: Assignment) => {
-    setEditingAssignment(assignment);
-    setIsEditModalOpen(true);
-  };
-
-  const handleDelete = (assignment: Assignment) => {
-    setDeletingAssignment(assignment);
-    setIsDeleteModalOpen(true);
   };
 
   return (
@@ -240,7 +223,7 @@ export function AssignmentList() {
         <div>
           Showing{" "}
           <strong className="text-navy">{filteredAssignments.length}</strong> of{" "}
-          <strong className="text-navy">{assignments.length}</strong> assignments
+          <strong className="text-navy">{publishedAssignments.length}</strong> published assignments
           {hasActiveFilters && " (filtered)"}
         </div>
       </div>
@@ -254,8 +237,8 @@ export function AssignmentList() {
           <h3 className="text-sm font-bold text-navy">No assignments found</h3>
           <p className="text-xs text-neutral-secondary mt-1 max-w-sm mx-auto leading-relaxed">
             {hasActiveFilters
-              ? "No assignments match your search query or filter settings. Try adjusting or clearing your filters."
-              : "No course assignments have been recorded yet. Click 'Add Assignment' above to create one."}
+              ? "No published assignments match your search query or filter settings. Try adjusting or clearing your filters."
+              : "No course assignments have been published yet by your teachers."}
           </p>
           {hasActiveFilters && (
             <button
@@ -273,38 +256,12 @@ export function AssignmentList() {
             <AssignmentCard
               key={assignment.id}
               assignment={assignment}
-              onToggleStatus={toggleAssignmentStatus}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
+              isCompleted={isStudentCompleted(assignment.id)}
+              onToggleStatus={toggleStudentCompletion}
             />
           ))}
         </div>
       )}
-
-      {/* Edit Modal */}
-      <AssignmentFormModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setEditingAssignment(null);
-        }}
-        assignmentToEdit={editingAssignment}
-      />
-
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setDeletingAssignment(null);
-        }}
-        assignment={deletingAssignment}
-        onConfirm={() => {
-          if (deletingAssignment) {
-            deleteAssignment(deletingAssignment.id);
-          }
-        }}
-      />
     </div>
   );
 }

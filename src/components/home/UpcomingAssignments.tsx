@@ -8,7 +8,6 @@ import {
   Clock,
   ArrowRight,
   Circle,
-  CheckCircle2,
   Check,
 } from "lucide-react";
 import { useAssignments } from "@/context/AssignmentsContext";
@@ -16,7 +15,7 @@ import { formatDisplayDate, getDueStatusText, isAssignmentOverdue } from "@/lib/
 import { AssignmentPriority } from "@/types/assignment";
 
 export function UpcomingAssignments() {
-  const { upcomingPendingAssignments, stats, toggleAssignmentStatus } = useAssignments();
+  const { upcomingPendingAssignments, studentStats, toggleStudentCompletion } = useAssignments();
 
   const getPriorityBadge = (priority: AssignmentPriority) => {
     switch (priority) {
@@ -93,8 +92,8 @@ export function UpcomingAssignments() {
       ) : (
         <div className="divide-y divide-neutral-border/70">
           {upcomingPendingAssignments.map((item) => {
-            const dueInfo = getDueStatusText(item);
-            const isOverdue = isAssignmentOverdue(item);
+            const dueInfo = getDueStatusText(item.dueDate, false);
+            const isOverdue = isAssignmentOverdue(item.dueDate, false);
 
             return (
               <div
@@ -105,7 +104,7 @@ export function UpcomingAssignments() {
                 <div className="flex items-start gap-3 min-w-0 flex-1">
                   <button
                     type="button"
-                    onClick={() => toggleAssignmentStatus(item.id)}
+                    onClick={() => toggleStudentCompletion(item.id)}
                     className="mt-0.5 w-5 h-5 rounded border border-neutral-border flex items-center justify-center text-neutral-secondary hover:text-semantic-success hover:border-semantic-success transition-colors flex-shrink-0"
                     title="Mark as completed"
                     aria-label={`Mark ${item.title} as completed`}
@@ -135,7 +134,7 @@ export function UpcomingAssignments() {
                           isOverdue ? "text-semantic-error" : "text-navy"
                         }`}
                       >
-                        <Clock className="w-3 h-3 text-neutral-secondary" />
+                        <Clock className="w-3.5 h-3.5 text-neutral-secondary" />
                         <span>{dueInfo.text}</span>
                       </span>
                     </div>
@@ -146,7 +145,7 @@ export function UpcomingAssignments() {
                 <div className="flex items-center gap-2 self-start sm:self-center pl-8 sm:pl-0 flex-shrink-0">
                   {getPriorityBadge(item.priority)}
                   <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-neutral-light text-neutral-secondary border border-neutral-border">
-                    {item.status}
+                    Pending
                   </span>
                 </div>
               </div>
@@ -159,16 +158,16 @@ export function UpcomingAssignments() {
       {upcomingPendingAssignments.length > 0 && (
         <div className="mt-4 pt-3.5 border-t border-neutral-border flex items-center justify-between text-xs text-neutral-secondary">
           <span>
-            Showing {Math.min(3, stats.pending)} of {stats.pending} pending assignment
-            {stats.pending !== 1 ? "s" : ""}
+            Showing {Math.min(3, studentStats.pending)} of {studentStats.pending} pending assignment
+            {studentStats.pending !== 1 ? "s" : ""}
           </span>
           <Link
             href="/assignments"
             className="font-semibold text-indigo hover:text-indigo-hover inline-flex items-center gap-1"
           >
-            {stats.pending > 3 ? (
+            {studentStats.pending > 3 ? (
               <>
-                <span>See {stats.pending - 3} more in Assignments</span>
+                <span>See {studentStats.pending - 3} more in Assignments</span>
                 <ArrowRight className="w-3 h-3" />
               </>
             ) : (

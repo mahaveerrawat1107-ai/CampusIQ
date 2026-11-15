@@ -4,19 +4,19 @@ import React, { useEffect } from "react";
 import { AlertTriangle, Trash2, X } from "lucide-react";
 import { Assignment } from "@/types/assignment";
 
-interface DeleteConfirmModalProps {
+interface StaffDeleteModalProps {
   assignment: Assignment | null;
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
 }
 
-export function DeleteConfirmModal({
+export function StaffDeleteModal({
   assignment,
   isOpen,
   onClose,
   onConfirm,
-}: DeleteConfirmModalProps) {
+}: StaffDeleteModalProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
@@ -33,8 +33,8 @@ export function DeleteConfirmModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-labelledby="delete-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy/40 backdrop-blur-sm animate-in fade-in duration-150"
+      aria-labelledby="staff-delete-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy/50 backdrop-blur-sm animate-in fade-in duration-150"
     >
       <div
         className="w-full max-w-md bg-surface rounded-card border border-neutral-border p-6 shadow-modal space-y-4"
@@ -55,30 +55,30 @@ export function DeleteConfirmModal({
         </div>
 
         <div>
-          <h3 id="delete-modal-title" className="text-[17px] font-bold text-navy">
-            Delete Assignment
+          <h3 id="staff-delete-modal-title" className="text-[17px] font-bold text-navy">
+            Delete Course Assignment
           </h3>
           <p className="text-xs text-neutral-secondary mt-1.5 leading-relaxed">
-            Are you sure you want to delete{" "}
+            Are you sure you want to permanently delete{" "}
             <span className="font-semibold text-navy">
               &quot;{assignment.title}&quot;
             </span>
-            ? This action cannot be undone.
+            ? This will remove the assignment and its attachments for all students.
           </p>
         </div>
 
         <div className="p-3 rounded-input bg-neutral-light border border-neutral-border text-xs text-neutral-secondary space-y-1">
           <div className="flex justify-between">
-            <span className="text-neutral-secondary">Subject:</span>
+            <span>Subject:</span>
             <span className="font-semibold text-navy">{assignment.subjectCode} — {assignment.subjectName}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-neutral-secondary">Due Date:</span>
-            <span className="font-semibold text-navy">{assignment.dueDate}</span>
+            <span>Visibility:</span>
+            <span className="font-semibold text-navy">{assignment.isPublished ? "Published" : "Draft"}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-neutral-secondary">Status:</span>
-            <span className="font-semibold text-navy">{assignment.status}</span>
+            <span>Attachments:</span>
+            <span className="font-semibold text-navy">{assignment.attachments?.length || 0} files</span>
           </div>
         </div>
 

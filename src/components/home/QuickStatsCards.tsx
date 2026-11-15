@@ -10,7 +10,7 @@ interface QuickStatsCardsProps {
 }
 
 export function QuickStatsCards({ newNotesCount }: QuickStatsCardsProps) {
-  const { stats } = useAssignments();
+  const { studentStats } = useAssignments();
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -23,20 +23,20 @@ export function QuickStatsCards({ newNotesCount }: QuickStatsCardsProps) {
             </span>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="text-[32px] font-bold text-navy leading-none tabular-nums">
-                {stats.pending}
+                {studentStats.pending}
               </span>
               <span
                 className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                  stats.pending > 0
+                  studentStats.pending > 0
                     ? "text-semantic-warning bg-semantic-warning-subtle"
                     : "text-semantic-success bg-semantic-success-subtle"
                 }`}
               >
-                {stats.pending > 0 ? "Action required" : "All caught up"}
+                {studentStats.pending > 0 ? "Action required" : "All caught up"}
               </span>
             </div>
             <p className="text-xs text-neutral-secondary mt-1.5">
-              Tasks remaining to submit
+              Published tasks remaining
             </p>
           </div>
 

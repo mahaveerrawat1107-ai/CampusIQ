@@ -13,13 +13,17 @@ export function getTodayDateString(): string {
 
 /**
  * Checks whether an assignment is overdue.
- * Requirement: A completed assignment must NEVER be displayed as overdue.
+ * Rule: A completed assignment must NEVER be displayed as overdue.
  */
-export function isAssignmentOverdue(assignment: Assignment, todayStr: string = getTodayDateString()): boolean {
-  if (assignment.status === "Completed") {
+export function isAssignmentOverdue(
+  dueDate: string,
+  isCompleted: boolean,
+  todayStr: string = getTodayDateString()
+): boolean {
+  if (isCompleted) {
     return false;
   }
-  return assignment.dueDate < todayStr;
+  return dueDate < todayStr;
 }
 
 /**
@@ -41,16 +45,16 @@ export function formatDisplayDate(dateStr: string): string {
  * Computes human-friendly relative time for assignment due date.
  */
 export function getDueStatusText(
-  assignment: Assignment,
+  dueDate: string,
+  isCompleted: boolean,
   todayStr: string = getTodayDateString()
 ): { text: string; isOverdue: boolean; isDueSoon: boolean } {
-  if (assignment.status === "Completed") {
+  if (isCompleted) {
     return { text: "Completed", isOverdue: false, isDueSoon: false };
   }
 
-  if (assignment.dueDate < todayStr) {
-    // Overdue
-    const diffDays = getDiffDays(todayStr, assignment.dueDate);
+  if (dueDate < todayStr) {
+    const diffDays = getDiffDays(todayStr, dueDate);
     return {
       text: diffDays === 1 ? "Overdue by 1 day" : `Overdue by ${diffDays} days`,
       isOverdue: true,
@@ -58,19 +62,16 @@ export function getDueStatusText(
     };
   }
 
-  if (assignment.dueDate === todayStr) {
+  if (dueDate === todayStr) {
     return { text: "Due today", isOverdue: false, isDueSoon: true };
   }
 
-  const diffDays = getDiffDays(assignment.dueDate, todayStr);
+  const diffDays = getDiffDays(dueDate, todayStr);
   if (diffDays === 1) {
     return { text: "Due tomorrow", isOverdue: false, isDueSoon: true };
   }
   if (diffDays <= 3) {
     return { text: `Due in ${diffDays} days`, isOverdue: false, isDueSoon: true };
-  }
-  if (diffDays <= 7) {
-    return { text: `Due in ${diffDays} days`, isOverdue: false, isDueSoon: false };
   }
   return { text: `Due in ${diffDays} days`, isOverdue: false, isDueSoon: false };
 }

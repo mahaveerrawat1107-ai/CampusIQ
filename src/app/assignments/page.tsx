@@ -1,20 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import {
   ClipboardList,
-  Plus,
   ArrowLeft,
-  Sparkles,
+  ShieldAlert,
+  ArrowUpRight,
 } from "lucide-react";
 import { AssignmentStatsCards } from "@/components/assignments/AssignmentStatsCards";
 import { AssignmentList } from "@/components/assignments/AssignmentList";
-import { AssignmentFormModal } from "@/components/assignments/AssignmentFormModal";
 
 export default function AssignmentsPage() {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -23,7 +20,7 @@ export default function AssignmentsPage() {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-semibold uppercase tracking-wider text-indigo flex items-center gap-1.5">
               <ClipboardList className="w-3.5 h-3.5" />
-              <span>Academic Workspace</span>
+              <span>Student Academic Workspace</span>
             </span>
             <span className="text-neutral-border text-xs">•</span>
             <span className="text-xs text-neutral-secondary font-medium">
@@ -34,7 +31,7 @@ export default function AssignmentsPage() {
             Assignments
           </h1>
           <p className="text-[13px] sm:text-[14px] text-neutral-secondary mt-1">
-            Organize course deadlines, prioritize pending tasks, and track personal completion.
+            Access official course tasks, download reference attachments, and track personal completion.
           </p>
         </div>
 
@@ -48,15 +45,38 @@ export default function AssignmentsPage() {
             <span className="hidden sm:inline">Back to</span> Dashboard
           </Link>
 
-          <button
-            type="button"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-input bg-indigo text-white text-xs font-semibold hover:bg-indigo-hover transition-colors shadow-sm"
+          <Link
+            href="/admin/assignments"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-input bg-indigo-subtle border border-indigo/30 text-indigo text-xs font-semibold hover:bg-indigo hover:text-white transition-colors shadow-xs"
+            title="Switch to Staff Assignment Management Prototype"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Assignment</span>
-          </button>
+            <span>Staff Portal Prototype</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
+      </div>
+
+      {/* Staff Prototype Banner Note */}
+      <div className="p-3.5 rounded-card bg-surface border border-indigo/20 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-start sm:items-center gap-2.5">
+          <div className="w-7 h-7 rounded bg-indigo-subtle text-indigo flex items-center justify-center flex-shrink-0 mt-0.5 sm:mt-0">
+            <ShieldAlert className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="font-bold text-navy">Workflow Rule: </span>
+            <span className="text-neutral-secondary">
+              Academic assignments are published by faculty. Students receive tasks and can toggle personal completion, but cannot modify course assignments.
+            </span>
+          </div>
+        </div>
+
+        <Link
+          href="/admin/assignments"
+          className="self-start sm:self-center font-bold text-indigo hover:underline flex items-center gap-1 flex-shrink-0"
+        >
+          <span>Open Staff Management</span>
+          <ArrowUpRight className="w-3 h-3" />
+        </Link>
       </div>
 
       {/* A. Assignment Dashboard Summary Stats Cards */}
@@ -68,20 +88,14 @@ export default function AssignmentsPage() {
       <section aria-label="Assignment List and Filters">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-[16px] font-bold text-navy">
-            All Course Assignments
+            Published Course Assignments
           </h2>
           <span className="text-xs text-neutral-secondary font-medium">
-            Pre-calibrated for UIT RGPV Shivpuri
+            UIT RGPV Shivpuri • Official Academic Coursework
           </span>
         </div>
         <AssignmentList />
       </section>
-
-      {/* Create Assignment Modal */}
-      <AssignmentFormModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-      />
     </div>
   );
 }
