@@ -23,6 +23,7 @@ import { Assignment, AssignmentPriority } from "@/types/assignment";
 import { formatDisplayDate } from "@/lib/assignmentUtils";
 import { StaffAssignmentModal } from "@/components/admin/StaffAssignmentModal";
 import { StaffDeleteModal } from "@/components/admin/StaffDeleteModal";
+import { StaffHeaderNav } from "@/components/admin/StaffHeaderNav";
 
 export default function StaffAssignmentsPage() {
   const {
@@ -90,6 +91,9 @@ export default function StaffAssignmentsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Staff Sub-Navigation */}
+      <StaffHeaderNav />
+
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-neutral-border/60">
         <div>

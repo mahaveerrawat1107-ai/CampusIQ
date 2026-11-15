@@ -3,6 +3,7 @@ import { Manrope } from "next/font/google";
 import { AppShell } from "@/components/layout/AppShell";
 import { AttendanceProvider } from "@/context/AttendanceContext";
 import { AssignmentsProvider } from "@/context/AssignmentsContext";
+import { NotesProvider } from "@/context/NotesContext";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -35,7 +36,9 @@ export default function RootLayout({
       <body className="min-h-screen bg-background font-sans text-navy antialiased">
         <AttendanceProvider>
           <AssignmentsProvider>
-            <AppShell>{children}</AppShell>
+            <NotesProvider>
+              <AppShell>{children}</AppShell>
+            </NotesProvider>
           </AssignmentsProvider>
         </AttendanceProvider>
       </body>

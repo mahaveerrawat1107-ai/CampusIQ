@@ -80,10 +80,38 @@ The student application consists of **five primary navigation destinations**, pl
   - Upcoming Assignments preview displays top 3 pending published assignments sorted by nearest due date.
   - Never shows draft or unpublished assignments to students.
 
-### 4. Notes Library (Stage 4 Scaffold)
-- Academic hierarchy: **Semester → Subject → Unit → PDF**.
-- Search and filtering by subject/unit.
-- Mobile-friendly PDF preview with download fallback.
+### 4. Notes Library — *Stage 4 Implemented & Verified*
+- **Role & Workflow Architecture:**
+  - Academic notes are uploaded, edited, replaced, and published exclusively by authorized faculty.
+  - Students have verified read-only access to published notes. Students cannot upload, replace, edit, or delete notes.
+- **Academic Hierarchy:**
+  - **Semester 1 → Course Subject → Syllabus Unit (Units 1–5) → PDF Documents**.
+  - Subject catalogue strictly aligned with `PILOT_SUBJECTS` (`BT-101`, `BT-102`, `BT-104`, `BT-105`, and provisional `BT-106`).
+  - Unit breakdown contextual to each subject syllabus (`SUBJECT_UNITS` catalogue).
+- **Student Notes Library (`/notes`):**
+  - Hierarchy context breadcrumbs (Semester 1 → Selected Subject → Unit).
+  - Search notes by document title, keywords, or syllabus sub-topics.
+  - Subject selector pills with document counters.
+  - Contextual unit filters (All Units, Units 1 to 5).
+  - Note Card displaying document title, description, unit tag, file size, upload date, and instructor attribution.
+  - Embedded PDF preview modal with full-screen pop-out and direct download triggers.
+  - Informative empty states when a subject or unit has no published notes.
+- **Staff Notes Management (`/admin/notes`):**
+  - Interactive staff curation console with prototype disclaimer.
+  - Staff KPI statistics: Total Documents, Published Live, Drafts/Hidden, Subjects Covered.
+  - Shared sub-navigation linking between Assignment Management and Notes Management.
+  - Multi-criteria filtering by subject, unit, and publication status.
+  - One-click Publish / Unpublish toggle. Unpublished draft notes are strictly hidden from students.
+  - Upload modal with file validation (PDF only, maximum 15 MB).
+  - Dedicated "Replace PDF" action updating the stored binary file without losing document metadata.
+  - Delete action with confirmation modal, properly cleaning up stored PDF blobs.
+- **File Storage & Local Persistence:**
+  - PDF binary data stored in browser IndexedDB (`campusiq_notes_db` store `notes_blobs`), eliminating localStorage size quota limits.
+  - Document metadata stored separately in `localStorage` (`campusiq_notes_catalog_v1`).
+  - Pre-seeded with 5 published course notes and 1 draft note for testing.
+- **Home Dashboard Synchronization:**
+  - `QuickStatsCards` dynamically displays published notes count.
+  - `RecentNotes` displays latest 3 published notes with inline preview triggers. Draft notes never appear.
 
 ### 5. Profile (Stage 5 Scaffold)
 - Student identity: Full name, enrollment number (`0192CS261042`), branch (CSE), semester (Semester 1).
@@ -134,4 +162,13 @@ The student application consists of **five primary navigation destinations**, pl
   - Decoupled storage: Student completion statuses (`campusiq_student_status_v2`) decoupled from staff assignment definitions (`campusiq_assignments_catalog_v2`).
   - Home Dashboard synchronized: only published pending assignments shown (top 3) and counted. Draft assignments hidden.
   - Verified with 9/9 static pages compilation and live HTTP probe tests.
-- **Next Milestone:** Stage 4 — Notes Library (awaiting user approval).
+- **Stage 4 — Subject-Wise Notes Library & Staff Resource Management:** Completed.
+  - Core product rule enforced: Students have read-only access to published notes; faculty exclusively uploads, edits, replaces, and publishes notes.
+  - Hierarchy established: Semester 1 → Course Subject (`PILOT_SUBJECTS`) → Syllabus Unit (Units 1–5 contextual) → PDF Documents.
+  - Student page `/notes`: Search by title, subject selector pills, unit filter pills, NoteCard layout, interactive PDF preview modal, direct downloads, and informative empty states.
+  - Staff console `/admin/notes`: Upload new notes modal, contextual unit selection, replace PDF modal (without losing metadata), edit metadata modal, delete note modal (with IndexedDB file cleanup), and instant publish/unpublish toggle.
+  - File storage & persistence: Binary PDF blobs stored in IndexedDB (`campusiq_notes_db`), metadata in localStorage (`campusiq_notes_catalog_v1`).
+  - Home Dashboard integration: Recent Notes list and Quick Stats counters dynamically synchronized with published notes.
+  - Staff navigation: Shared sub-navigation linking between Assignment Management and Notes Management.
+  - Build & probes: 10/10 static pages generated, 0 TypeScript errors.
+- **Next Milestone:** Stage 5 — Profile & Settings (awaiting user approval).

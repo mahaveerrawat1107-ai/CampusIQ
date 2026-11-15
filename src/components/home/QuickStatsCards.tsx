@@ -4,13 +4,11 @@ import React from "react";
 import Link from "next/link";
 import { ClipboardList, BookOpen, ArrowRight } from "lucide-react";
 import { useAssignments } from "@/context/AssignmentsContext";
+import { useNotes } from "@/context/NotesContext";
 
-interface QuickStatsCardsProps {
-  newNotesCount: number;
-}
-
-export function QuickStatsCards({ newNotesCount }: QuickStatsCardsProps) {
+export function QuickStatsCards() {
   const { studentStats } = useAssignments();
+  const { publishedNotes } = useNotes();
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -56,7 +54,7 @@ export function QuickStatsCards({ newNotesCount }: QuickStatsCardsProps) {
         </div>
       </div>
 
-      {/* New Notes Card */}
+      {/* Published Notes Card */}
       <div className="bg-surface rounded-card border border-neutral-border p-5 shadow-card hover:border-neutral-border/80 transition-colors flex flex-col justify-between">
         <div className="flex items-start justify-between">
           <div>
@@ -65,14 +63,14 @@ export function QuickStatsCards({ newNotesCount }: QuickStatsCardsProps) {
             </span>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="text-[32px] font-bold text-navy leading-none tabular-nums">
-                {newNotesCount}
+                {publishedNotes.length}
               </span>
               <span className="text-xs font-semibold text-indigo bg-indigo-subtle px-2 py-0.5 rounded-full">
                 Semester 1
               </span>
             </div>
             <p className="text-xs text-neutral-secondary mt-1.5">
-              PDFs uploaded this week
+              Published syllabus PDFs
             </p>
           </div>
 
