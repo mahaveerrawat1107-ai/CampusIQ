@@ -113,9 +113,36 @@ The student application consists of **five primary navigation destinations**, pl
   - `QuickStatsCards` dynamically displays published notes count.
   - `RecentNotes` displays latest 3 published notes with inline preview triggers. Draft notes never appear.
 
-### 5. Profile (Stage 5 Scaffold)
-- Student identity: Full name, enrollment number (`0192CS261042`), branch (CSE), semester (Semester 1).
-- Account settings and sign-out.
+### 5. Profile — *Stage 5 Implemented & Verified*
+- **Student Profile Identity (`/profile`):**
+  - Name: Alex Sharma, Initials avatar (`AS`), status badge (`Active Student`).
+  - Copyable RGPV Enrollment Number (`0192CS261042`) with clipboard feedback.
+  - Institution: UIT RGPV Shivpuri (`University Institute of Technology, RGPV Shivpuri`).
+  - Branch & Program: B.Tech in Computer Science & Engineering (Undergraduate 4-Year Technical Program).
+  - Current Standing: 1st Semester (1st Year Common Engineering Curriculum), Section A, Batch 2026–2030.
+  - Academic Session: 2026–2027 (Admitted: August 2026).
+- **Academic Standing Snapshot:**
+  - Dynamic cross-module summary linked to live context states:
+    - Overall attendance percentage and status (`Safe`, `Warning`, or `Critical`) with link to `/attendance`.
+    - Assignment completion progress (`X / Y completed`, pending count) with link to `/assignments`.
+    - Verified syllabus notes count with link to `/notes`.
+- **Institutional Records Card:**
+  - Detailed 6-card grid covering Institution, Degree/Branch, Semester Standing, Section & Batch, University Enrollment No, and Academic Session.
+- **Account Settings & Notification Preferences:**
+  - Institutional student email (`alex.sharma@uitrgpv.ac.in`) and registered phone (`+91 98765 43210`).
+  - Three local storage persisted notification toggles (`campusiq_student_preferences_v1`):
+    - Attendance threshold & safe bunks alerts (warns when nearing 75%).
+    - Assignment deadline reminders (notifications before due dates).
+    - Course syllabus notes announcements (alerts on newly published faculty notes).
+- **Appearance & Display Theme:**
+  - Clean Light Standard (default active theme matching Notion/Linear clarity design tokens).
+  - Dark Mode preview selector and System Auto preference.
+- **Help, Guidelines & Institutional Support:**
+  - Designated Academic Authority contact card: Dr. S.K. Jain, Head of Department & Academic Coordinator (`academics.uitrgpv@rgpv.ac.in`, Room 108 Academic Block A, Mon–Fri 10 AM – 4 PM).
+  - Interactive FAQ accordion covering 5 key institutional pilot questions across Attendance, Assignments, Notes, and Account categories.
+  - Interactive Academic Support & Query modal (`FeedbackModal`) allowing students to log inquiries with category selection and confirmation feedback.
+- **Session & Sign Out Prototype:**
+  - UI-only prototype with accessible confirmation modal (`LogoutConfirmModal`) explaining simulated pilot session scope without breaking local student study history.
 
 ### 6. Admin Panel (Protected Route - Post Student MVP)
 - Separate administrative interface for content curation.
@@ -171,4 +198,8 @@ The student application consists of **five primary navigation destinations**, pl
   - Home Dashboard integration: Recent Notes list and Quick Stats counters dynamically synchronized with published notes.
   - Staff navigation: Shared sub-navigation linking between Assignment Management and Notes Management.
   - Build & probes: 10/10 static pages generated, 0 TypeScript errors.
-- **Next Milestone:** Stage 5 — Profile & Settings (awaiting user approval).
+- **Stage 5 — Student Profile & Account Settings:** Completed.
+  - Implemented `/profile` with student identity header, copyable enrollment number, institutional academic cards, dynamic academic standing snapshot, persistent notification preferences, appearance theme selectors, coordinator contact info, interactive FAQ accordion, academic query feedback modal, and simulated sign-out modal.
+  - Preserved 5-item bottom mobile navigation and desktop sidebar navigation.
+  - Clean build verified: 10/10 static routes generated with 0 errors.
+- **Next Milestone:** Student MVP End-to-End Testing & Review.
