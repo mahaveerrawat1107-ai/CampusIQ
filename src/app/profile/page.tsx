@@ -26,8 +26,8 @@ export default function ProfilePage() {
     setIsLogoutModalOpen(false);
     setLoggedOutNotice(true);
     setTimeout(() => {
-      setLoggedOutNotice(false);
-    }, 4000);
+      window.location.href = "/login";
+    }, 1000);
   };
 
   return (

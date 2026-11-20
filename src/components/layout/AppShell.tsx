@@ -35,6 +35,11 @@ const navItems: NavItem[] = [
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
 
+  // Full-bleed clean layout for auth/login page
+  if (pathname === "/login") {
+    return <div className="min-h-screen bg-background text-navy">{children}</div>;
+  }
+
   const isItemActive = (href: string) => {
     if (href === "/") {
       return pathname === "/";

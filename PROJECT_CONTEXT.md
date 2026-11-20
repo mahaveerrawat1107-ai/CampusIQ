@@ -202,4 +202,33 @@ The student application consists of **five primary navigation destinations**, pl
   - Implemented `/profile` with student identity header, copyable enrollment number, institutional academic cards, dynamic academic standing snapshot, persistent notification preferences, appearance theme selectors, coordinator contact info, interactive FAQ accordion, academic query feedback modal, and simulated sign-out modal.
   - Preserved 5-item bottom mobile navigation and desktop sidebar navigation.
   - Clean build verified: 10/10 static routes generated with 0 errors.
-- **Next Milestone:** Student MVP End-to-End Testing & Review.
+- **Stage 6 — Backend Architecture & Supabase Integration (In Progress):**
+  - **Stage 6.0 — Connection & Client Infrastructure:** Completed.
+    - Installed official `@supabase/supabase-js` and `@supabase/ssr` packages.
+    - Created browser client (`src/lib/supabase/client.ts`) and server client (`src/lib/supabase/server.ts`) adhering to Next.js 14 App Router cookie handling (`getAll`/`setAll`).
+    - Configured `.env.local` with project URL and publishable key (Git-ignored).
+    - Verified connectivity via Node.js SDK probe.
+  - **Stage 6.1 — Database Architecture & Hardened Security Design:** Completed & Approved.
+    - 21 tables across 6 domains designed for UIT RGPV Shivpuri.
+    - Physical isolation of student personal attendance logs from institutional records.
+    - Cryptographically secure single-use teacher invitation tokens (SHA-256 hash stored only).
+    - Hardened RLS policies with 8 SECURITY DEFINER helper functions.
+    - Immutability trigger on AI messages and parent conversation verification.
+    - Restricted `class_student_directory` view for teacher roster access.
+  - **Stage 6.2 — SQL Migrations & Verification Suite:** Generated & Ready.
+    - Migration scripts 001–008 authored under `supabase/migrations/`.
+    - Consolidated execution script prepared: `supabase/combined_migration.sql` (75 KB).
+    - Verification probe script created: `scripts/verify-migration.mjs`.
+    - Production build verified: 10/10 static routes, 0 TypeScript errors.
+- **Stage 7 — Login Page & Demo Access Interface:** Completed.
+  - Implemented `/login` with clean, responsive CampusIQ design system.
+  - Two primary entry points: "Continue as Student" and "Continue as Teacher".
+  - Teacher entry displays sub-roles: Teacher, HOD, and Admin (enforcing backend role integrity where HOD maps to teacher).
+  - Dedicated "Demo Access" panel for evaluators with 1-click test fill:
+    - Student Demo: `CIQ-STU-001` / `student123` -> redirects to Student Workspace (`/`).
+    - Teacher Demo: `CIQ-TEA-001` / `teacher123` -> displays "This portal will be available in a future update."
+    - Admin Demo: `CIQ-ADM-001` / `admin123` -> displays "This portal will be available in a future update."
+  - AppShell modified to render clean standalone layout on `/login` without student navigation bars.
+  - Student Profile sign-out modal wired to redirect to `/login`.
+  - Clean build verified: 11/11 static routes generated with 0 errors.
+- **Next Milestone:** Execute database migration in Supabase SQL Editor and run verification probe.
