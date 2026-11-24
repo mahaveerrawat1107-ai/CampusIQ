@@ -74,7 +74,7 @@ export function MarkAttendanceCard() {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Gather marked subjects
     const marksToSave: Array<{ subjectId: string; status: "present" | "absent" }> = [];
     for (const [subjectId, status] of Object.entries(selectedMarks)) {
@@ -92,14 +92,12 @@ export function MarkAttendanceCard() {
     }
 
     setIsSaving(true);
-    setTimeout(() => {
-      const result = saveAttendance(selectedDate, marksToSave);
-      setIsSaving(false);
-      setFeedback({
-        type: result.success ? "success" : "error",
-        message: result.message,
-      });
-    }, 200);
+    const result = await saveAttendance(selectedDate, marksToSave);
+    setIsSaving(false);
+    setFeedback({
+      type: result.success ? "success" : "error",
+      message: result.message,
+    });
   };
 
   const activeMarkCount = Object.values(selectedMarks).filter(Boolean).length;

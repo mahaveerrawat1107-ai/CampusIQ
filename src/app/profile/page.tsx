@@ -17,17 +17,24 @@ import { AccountSettingsCard } from "@/components/profile/AccountSettingsCard";
 import { AppearancePreferencesCard } from "@/components/profile/AppearancePreferencesCard";
 import { HelpSupportSection } from "@/components/profile/HelpSupportSection";
 import { LogoutConfirmModal } from "@/components/profile/LogoutConfirmModal";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ProfilePage() {
+  const { signOut } = useAuth();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [loggedOutNotice, setLoggedOutNotice] = useState(false);
 
-  const handleConfirmLogout = () => {
+  const handleConfirmLogout = async () => {
     setIsLogoutModalOpen(false);
     setLoggedOutNotice(true);
+    try {
+      await signOut();
+    } catch (e) {
+      console.warn("Sign out error:", e);
+    }
     setTimeout(() => {
       window.location.href = "/login";
-    }, 1000);
+    }, 800);
   };
 
   return (

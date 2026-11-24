@@ -1,0 +1,10 @@
+Context: We are working on CampusIQ, an academic workspace platform for UIT RGPV Shivpuri built with Next.js 14 App Router, TypeScript, Tailwind CSS, and Supabase SSR.
+
+Recent Progress:
+- Completed the Supabase backend migration for the Attendance module (AttendanceContext now persists via Server Actions in src/lib/supabase/actions.ts querying student_attendance_logs with RLS).
+- Verified zero TypeScript compilation errors and successful production builds (all 11 routes generated).
+- Conducted comprehensive product audit verifying auth guards, UI component hierarchy, local blob storage for PDF notes, and security guardrails.
+- Created all six audit deliverables in docs/audit/2026-11-22/.
+
+Active Stack: Next.js 14.2, TypeScript, Tailwind CSS, @supabase/ssr, Lucide React.
+Current Goal: Continue feature enhancement, staff portal expansion, or additional backend migrations as requested. Live browser testing and real Supabase CRUD verification may be needed next.

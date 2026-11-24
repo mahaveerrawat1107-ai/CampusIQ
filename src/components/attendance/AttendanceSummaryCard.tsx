@@ -5,7 +5,7 @@ import { ShieldCheck, AlertTriangle, AlertCircle, RefreshCw, CheckCircle2 } from
 import { useAttendance } from "@/context/AttendanceContext";
 
 export function AttendanceSummaryCard() {
-  const { overallSummary, resetToDefaultSeed } = useAttendance();
+  const { overallSummary, refreshAttendance, isLoading } = useAttendance();
   const { percentage, attended, total, target, status, safeBunks, classesNeeded, statusMessage } =
     overallSummary;
 
@@ -73,15 +73,16 @@ export function AttendanceSummaryCard() {
             )}
           </span>
 
-          {/* Reset button for demo testing */}
+          {/* Refresh button to sync with Supabase */}
           <button
             type="button"
-            onClick={resetToDefaultSeed}
-            className="p-1.5 rounded-input border border-neutral-border text-neutral-secondary hover:text-navy hover:bg-neutral-light transition-colors"
-            title="Reset demo data to 41/50 (82%) baseline"
-            aria-label="Reset demo data"
+            onClick={() => refreshAttendance()}
+            disabled={isLoading}
+            className="p-1.5 rounded-input border border-neutral-border text-neutral-secondary hover:text-navy hover:bg-neutral-light transition-colors disabled:opacity-50"
+            title="Refresh attendance from Supabase"
+            aria-label="Refresh attendance from Supabase"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-indigo" : ""}`} />
           </button>
         </div>
       </div>

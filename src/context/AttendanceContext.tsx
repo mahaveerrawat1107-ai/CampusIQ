@@ -1,12 +1,11 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { Subject } from "@/types";
-import {
-  AttendanceRecord,
-  PILOT_SUBJECTS,
-  SEED_ATTENDANCE_RECORDS,
-} from "@/data/attendanceData";
+import { PILOT_SUBJECTS } from "@/data/attendanceData";
+import { AttendanceRecord, mapAttendanceLogRow } from "@/types/attendance";
+import { useAuth } from "@/context/AuthContext";
+import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import {
   calculateAttendanceMetrics,
   AttendanceMetrics,
@@ -16,7 +15,7 @@ export interface SubjectSummaryWithMeta extends AttendanceMetrics {
   subject: Subject;
 }
 
-interface SaveAttendanceResult {
+export interface SaveAttendanceResult {
   success: boolean;
   createdCount: number;
   updatedCount: number;
@@ -26,56 +25,82 @@ interface SaveAttendanceResult {
 interface AttendanceContextType {
   subjects: Subject[];
   records: AttendanceRecord[];
+  isLoading: boolean;
   isHydrated: boolean;
+  error: string | null;
   overallSummary: AttendanceMetrics;
   subjectSummaries: SubjectSummaryWithMeta[];
   saveAttendance: (
     sessionDate: string,
     marks: Array<{ subjectId: string; status: "present" | "absent" }>
-  ) => SaveAttendanceResult;
-  deleteRecord: (id: string) => void;
-  resetToDefaultSeed: () => void;
+  ) => Promise<SaveAttendanceResult>;
+  deleteRecord: (id: string) => Promise<{ success: boolean; message: string }>;
+  refreshAttendance: () => Promise<void>;
 }
-
-const STORAGE_KEY = "campusiq_attendance_records_v1";
 
 const AttendanceContext = createContext<AttendanceContextType | undefined>(undefined);
 
 export function AttendanceProvider({ children }: { children: React.ReactNode }) {
   const [subjects] = useState<Subject[]>(PILOT_SUBJECTS);
-  const [records, setRecords] = useState<AttendanceRecord[]>(SEED_ATTENDANCE_RECORDS);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isHydrated, setIsHydrated] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load persisted records from localStorage after client hydration
-  useEffect(() => {
+  const { user } = useAuth();
+  const [supabase] = useState(() => createBrowserClient());
+
+  // Subject quick-lookup map
+  const subjectMap = useMemo(() => {
+    const map = new Map<string, Subject>();
+    for (const subj of subjects) {
+      map.set(subj.id, subj);
+    }
+    return map;
+  }, [subjects]);
+
+  // Load records from Supabase for authenticated student
+  const refreshAttendance = useCallback(async () => {
+    if (!user) {
+      setRecords([]);
+      setIsLoading(false);
+      setIsHydrated(true);
+      return;
+    }
+
     try {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setRecords(parsed);
-          }
-        }
+      setIsLoading(true);
+      setError(null);
+
+      const { data, error: fetchErr } = await supabase
+        .from("student_attendance_logs")
+        .select("*")
+        .eq("student_id", user.id)
+        .order("session_date", { ascending: false });
+
+      if (fetchErr) {
+        throw fetchErr;
       }
-    } catch (e) {
-      console.warn("Could not read local attendance storage:", e);
+
+      if (data) {
+        const mappedRecords: AttendanceRecord[] = data.map((row) =>
+          mapAttendanceLogRow(row, subjectMap)
+        );
+        setRecords(mappedRecords);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to load attendance records.";
+      console.error("Attendance fetch error:", msg);
+      setError(msg);
     } finally {
+      setIsLoading(false);
       setIsHydrated(true);
     }
-  }, []);
+  }, [user, supabase, subjectMap]);
 
-  // Save changes to localStorage whenever records change (only after initial hydration)
-  const persistRecords = (newRecords: AttendanceRecord[]) => {
-    setRecords(newRecords);
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newRecords));
-      }
-    } catch (e) {
-      console.error("Failed to save attendance records to local storage:", e);
-    }
-  };
+  useEffect(() => {
+    refreshAttendance();
+  }, [refreshAttendance]);
 
   // Compute overall summary across all subjects
   const overallSummary = useMemo(() => {
@@ -109,11 +134,20 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
     });
   }, [subjects, records]);
 
-  // Mark/save attendance for a given date
-  const saveAttendance = (
+  // Mark/save attendance for a given date (Create / Update in Supabase)
+  const saveAttendance = async (
     sessionDate: string,
     marks: Array<{ subjectId: string; status: "present" | "absent" }>
-  ): SaveAttendanceResult => {
+  ): Promise<SaveAttendanceResult> => {
+    if (!user) {
+      return {
+        success: false,
+        createdCount: 0,
+        updatedCount: 0,
+        message: "You must be signed in to save attendance.",
+      };
+    }
+
     if (!sessionDate || marks.length === 0) {
       return {
         success: false,
@@ -123,68 +157,93 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
       };
     }
 
-    const updatedRecords = [...records];
-    let createdCount = 0;
-    let updatedCount = 0;
+    try {
+      setError(null);
 
-    for (const mark of marks) {
-      const subj = subjects.find((s) => s.id === mark.subjectId);
-      if (!subj) continue;
+      // Check which marks are updates vs new inserts
+      const existingDateRecords = records.filter((r) => r.sessionDate === sessionDate);
+      const existingSubjectIds = new Set(existingDateRecords.map((r) => r.subjectId));
 
-      // Find if entry for this subject and date already exists
-      const existingIndex = updatedRecords.findIndex(
-        (r) => r.subjectId === mark.subjectId && r.sessionDate === sessionDate
-      );
+      let updatedCount = 0;
+      let createdCount = 0;
 
-      if (existingIndex >= 0) {
-        // Edit existing record (duplicate prevention)
-        updatedRecords[existingIndex] = {
-          ...updatedRecords[existingIndex],
-          status: mark.status,
-          recordedAt: new Date().toISOString(),
-        };
-        updatedCount += 1;
-      } else {
-        // Create new record
-        const newRecord: AttendanceRecord = {
-          id: `att-${mark.subjectId}-${sessionDate}-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-          studentId: "std-alex",
-          subjectId: mark.subjectId,
-          subjectName: subj.name,
-          subjectCode: subj.code,
-          sessionDate,
-          status: mark.status,
-          recordedAt: new Date().toISOString(),
-        };
-        updatedRecords.unshift(newRecord);
-        createdCount += 1;
+      for (const m of marks) {
+        if (existingSubjectIds.has(m.subjectId)) {
+          updatedCount++;
+        } else {
+          createdCount++;
+        }
       }
+
+      // Prepare payload with student_id = auth.uid()
+      const payload = marks.map((m) => ({
+        student_id: user.id,
+        subject_id: m.subjectId,
+        session_date: sessionDate,
+        status: m.status,
+      }));
+
+      // Upsert using the PostgreSQL UNIQUE constraint (student_id, subject_id, session_date)
+      const { error: upsertErr } = await supabase
+        .from("student_attendance_logs")
+        .upsert(payload, { onConflict: "student_id,subject_id,session_date" });
+
+      if (upsertErr) {
+        throw upsertErr;
+      }
+
+      // Re-fetch clean state from Supabase to guarantee consistency
+      await refreshAttendance();
+
+      return {
+        success: true,
+        createdCount,
+        updatedCount,
+        message:
+          updatedCount > 0 && createdCount > 0
+            ? `Logged ${createdCount} new class(es) and updated ${updatedCount} existing record(s).`
+            : updatedCount > 0
+            ? `Updated ${updatedCount} attendance record(s).`
+            : `Logged ${createdCount} attendance session(s) successfully.`,
+      };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to save attendance.";
+      console.error("Attendance save error:", msg);
+      setError(msg);
+      return {
+        success: false,
+        createdCount: 0,
+        updatedCount: 0,
+        message: msg,
+      };
+    }
+  };
+
+  // Delete an attendance record from Supabase
+  const deleteRecord = async (id: string): Promise<{ success: boolean; message: string }> => {
+    if (!user) {
+      return { success: false, message: "Authentication required." };
     }
 
-    persistRecords(updatedRecords);
+    try {
+      const { error: deleteErr } = await supabase
+        .from("student_attendance_logs")
+        .delete()
+        .eq("id", id)
+        .eq("student_id", user.id);
 
-    const message =
-      createdCount > 0 && updatedCount > 0
-        ? `Saved ${createdCount} new class${createdCount > 1 ? "es" : ""} and updated ${updatedCount} existing record${updatedCount > 1 ? "s" : ""}.`
-        : createdCount > 0
-        ? `Successfully recorded ${createdCount} class${createdCount > 1 ? "es" : ""} for ${sessionDate}.`
-        : `Updated ${updatedCount} record${updatedCount > 1 ? "s" : ""} for ${sessionDate}.`;
+      if (deleteErr) {
+        throw deleteErr;
+      }
 
-    return {
-      success: true,
-      createdCount,
-      updatedCount,
-      message,
-    };
-  };
-
-  const deleteRecord = (id: string) => {
-    const filtered = records.filter((r) => r.id !== id);
-    persistRecords(filtered);
-  };
-
-  const resetToDefaultSeed = () => {
-    persistRecords(SEED_ATTENDANCE_RECORDS);
+      // Update state locally
+      setRecords((prev) => prev.filter((r) => r.id !== id));
+      return { success: true, message: "Attendance record deleted." };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to delete record.";
+      console.error("Attendance delete error:", msg);
+      return { success: false, message: msg };
+    }
   };
 
   return (
@@ -192,12 +251,14 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
       value={{
         subjects,
         records,
+        isLoading,
         isHydrated,
+        error,
         overallSummary,
         subjectSummaries,
         saveAttendance,
         deleteRecord,
-        resetToDefaultSeed,
+        refreshAttendance,
       }}
     >
       {children}

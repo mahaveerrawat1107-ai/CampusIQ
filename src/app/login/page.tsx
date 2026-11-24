@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import {
   GraduationCap,
   Briefcase,
@@ -21,45 +22,6 @@ import {
 type PrimaryRoleOption = "student" | "faculty";
 type FacultySubRole = "teacher" | "hod" | "admin";
 
-interface DemoAccount {
-  label: string;
-  roleType: PrimaryRoleOption;
-  subRole?: FacultySubRole;
-  demoId: string;
-  password: string;
-  description: string;
-  badge: string;
-}
-
-const DEMO_ACCOUNTS: DemoAccount[] = [
-  {
-    label: "Student Demo",
-    roleType: "student",
-    demoId: "CIQ-STU-001",
-    password: "student123",
-    description: "Access existing student dashboard, attendance & notes",
-    badge: "Active",
-  },
-  {
-    label: "Teacher Demo",
-    roleType: "faculty",
-    subRole: "teacher",
-    demoId: "CIQ-TEA-001",
-    password: "teacher123",
-    description: "Faculty lecture & assignment management placeholder",
-    badge: "Upcoming",
-  },
-  {
-    label: "Admin Demo",
-    roleType: "faculty",
-    subRole: "admin",
-    demoId: "CIQ-ADM-001",
-    password: "admin123",
-    description: "Departmental administration & roster placeholder",
-    badge: "Upcoming",
-  },
-];
-
 export default function LoginPage() {
   const router = useRouter();
 
@@ -71,8 +33,8 @@ export default function LoginPage() {
   // HOD is a Teacher (role: 'teacher'), NOT a separate database role.
   const [facultySubRole, setFacultySubRole] = useState<FacultySubRole>("teacher");
 
-  // Form inputs
-  const [identifier, setIdentifier] = useState("");
+  // Form inputs (Email & Password for genuine Supabase Auth)
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -80,90 +42,92 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Future-portal modal for Teacher / HOD / Admin
+  // Future-portal modal for Teacher / HOD
   const [futurePortalRole, setFuturePortalRole] = useState<string | null>(null);
-
-  // Handle Quick Fill from Demo Access cards
-  const handleApplyDemo = (demo: DemoAccount) => {
-    setPrimaryRole(demo.roleType);
-    if (demo.subRole) {
-      setFacultySubRole(demo.subRole);
-    }
-    setIdentifier(demo.demoId);
-    setPassword(demo.password);
-    setErrorMessage(null);
-  };
 
   const handlePrimaryRoleChange = (role: PrimaryRoleOption) => {
     setPrimaryRole(role);
     setErrorMessage(null);
-    if (role === "student") {
-      setIdentifier("CIQ-STU-001");
-      setPassword("student123");
-    } else {
-      setIdentifier("CIQ-TEA-001");
-      setPassword("teacher123");
+    if (role === "faculty") {
       setFacultySubRole("teacher");
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
-    const trimmedId = identifier.trim();
+    const trimmedEmail = email.trim();
     const trimmedPass = password.trim();
 
-    if (!trimmedId || !trimmedPass) {
-      setErrorMessage("Please enter both your ID and password.");
+    if (!trimmedEmail || !trimmedPass) {
+      setErrorMessage("Please enter both your email address and password.");
+      return;
+    }
+
+    if (!trimmedEmail.includes("@")) {
+      setErrorMessage("Please enter a valid institutional email address.");
       return;
     }
 
     setIsLoading(true);
 
-    // Simulated auth delay for realistic feedback
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const supabase = createBrowserClient();
 
-      if (primaryRole === "student") {
-        // Student Demo Access verification
-        // Accept demo credential CIQ-STU-001 or standard student demo credentials
-        if (
-          (trimmedId.toUpperCase() === "CIQ-STU-001" && trimmedPass === "student123") ||
-          trimmedId.toLowerCase().includes("student") ||
-          trimmedId.startsWith("0108CS")
-        ) {
-          // Redirect to existing student dashboard
-          router.push("/");
-          return;
-        }
+      // Real Supabase Authentication via password
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password: trimmedPass,
+      });
 
-        setErrorMessage("Invalid Student ID or password. Use demo ID: CIQ-STU-001 / student123");
+      if (signInError) {
+        setIsLoading(false);
+        setErrorMessage(signInError.message || "Invalid login credentials.");
         return;
       }
 
-      // Teacher / HOD / Admin selection
-      // Per instructions: "For Teacher, HOD, and Admin demo access, show a simple message: 'This portal will be available in a future update.'"
-      let targetRoleLabel = "Teacher";
-      if (facultySubRole === "hod") {
-        targetRoleLabel = "Head of Department (HOD)";
-      } else if (facultySubRole === "admin") {
-        targetRoleLabel = "Institutional Administrator";
+      if (!data.user) {
+        setIsLoading(false);
+        setErrorMessage("Authentication failed: No user returned.");
+        return;
       }
 
-      // Verify demo credentials or show portal notice
-      if (
-        (facultySubRole === "teacher" && trimmedId.toUpperCase() === "CIQ-TEA-001" && trimmedPass === "teacher123") ||
-        (facultySubRole === "admin" && trimmedId.toUpperCase() === "CIQ-ADM-001" && trimmedPass === "admin123") ||
-        (facultySubRole === "hod" && (trimmedPass === "teacher123" || trimmedPass === "admin123")) ||
-        trimmedId.toUpperCase().startsWith("CIQ-")
-      ) {
-        setFuturePortalRole(targetRoleLabel);
-      } else {
-        // Also show future portal info with note
-        setFuturePortalRole(targetRoleLabel);
+      // Fetch user's actual database role from profiles
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role, verification_status")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        console.warn("User profile could not be loaded immediately:", profileError?.message);
       }
-    }, 450);
+
+      const userRole = profile?.role || "student";
+
+      // If user attempted faculty login but is in teacher/hod portal (upcoming)
+      if (primaryRole === "faculty" && (facultySubRole === "teacher" || facultySubRole === "hod")) {
+        let targetRoleLabel = "Teacher";
+        if (facultySubRole === "hod") {
+          targetRoleLabel = "Head of Department (HOD)";
+        }
+        setIsLoading(false);
+        setFuturePortalRole(targetRoleLabel);
+        return;
+      }
+
+      // Route based on genuine database role
+      setIsLoading(false);
+      if (userRole === "admin") {
+        router.push("/admin/assignments");
+      } else {
+        router.push("/");
+      }
+    } catch (err: unknown) {
+      setIsLoading(false);
+      setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred during login.");
+    }
   };
 
   return (
@@ -191,7 +155,7 @@ export default function LoginPage() {
 
         <div className="hidden sm:flex items-center gap-2 text-xs text-neutral-secondary bg-surface px-3 py-1.5 rounded-full border border-neutral-border shadow-xs">
           <span className="w-2 h-2 rounded-full bg-semantic-success animate-pulse" />
-          <span className="font-medium">System Online</span>
+          <span className="font-medium">Supabase Auth Connected</span>
         </div>
       </header>
 
@@ -204,7 +168,7 @@ export default function LoginPage() {
               Sign In to CampusIQ
             </h1>
             <p className="text-xs text-neutral-secondary max-w-xs mx-auto leading-relaxed">
-              Select your role and enter your institutional credentials to continue.
+              Enter your institutional email and password to access your workspace.
             </p>
           </div>
 
@@ -258,11 +222,7 @@ export default function LoginPage() {
                 {/* 1. Teacher */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setFacultySubRole("teacher");
-                    setIdentifier("CIQ-TEA-001");
-                    setPassword("teacher123");
-                  }}
+                  onClick={() => setFacultySubRole("teacher")}
                   className={`py-2 px-2 text-center rounded-input-sm text-xs font-medium transition-all ${
                     facultySubRole === "teacher"
                       ? "bg-indigo text-white font-semibold shadow-xs"
@@ -275,11 +235,7 @@ export default function LoginPage() {
                 {/* 2. HOD (Faculty role with Departmental authority; not a separate database role) */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setFacultySubRole("hod");
-                    setIdentifier("CIQ-TEA-001");
-                    setPassword("teacher123");
-                  }}
+                  onClick={() => setFacultySubRole("hod")}
                   className={`py-2 px-2 text-center rounded-input-sm text-xs font-medium transition-all ${
                     facultySubRole === "hod"
                       ? "bg-indigo text-white font-semibold shadow-xs"
@@ -292,11 +248,7 @@ export default function LoginPage() {
                 {/* 3. Admin */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setFacultySubRole("admin");
-                    setIdentifier("CIQ-ADM-001");
-                    setPassword("admin123");
-                  }}
+                  onClick={() => setFacultySubRole("admin")}
                   className={`py-2 px-2 text-center rounded-input-sm text-xs font-medium transition-all ${
                     facultySubRole === "admin"
                       ? "bg-indigo text-white font-semibold shadow-xs"
@@ -330,32 +282,23 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* ID Input */}
+            {/* Email Input */}
             <div className="space-y-1.5">
               <label
-                htmlFor="identifier"
+                htmlFor="email"
                 className="block text-xs font-semibold text-navy"
               >
-                {primaryRole === "student"
-                  ? "Enrollment Number / Demo ID"
-                  : facultySubRole === "admin"
-                  ? "Admin ID / Demo ID"
-                  : "Faculty ID / Demo ID"}
+                Institutional Email Address
               </label>
               <div className="relative">
                 <input
-                  id="identifier"
-                  type="text"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder={
-                    primaryRole === "student"
-                      ? "e.g. CIQ-STU-001 or 0108CS261001"
-                      : facultySubRole === "admin"
-                      ? "e.g. CIQ-ADM-001"
-                      : "e.g. CIQ-TEA-001"
-                  }
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="e.g. alex.sharma@uitrgpv.ac.in"
                   required
+                  autoComplete="email"
                   className="w-full px-3.5 py-2.5 text-xs rounded-input bg-surface border border-neutral-border text-navy placeholder:text-neutral-secondary/60 focus:outline-none focus:ring-2 focus:ring-indigo/20 focus:border-indigo transition-all font-medium"
                 />
               </div>
@@ -370,9 +313,6 @@ export default function LoginPage() {
                 >
                   Password
                 </label>
-                <span className="text-[11px] text-neutral-secondary">
-                  Demo credentials below
-                </span>
               </div>
               <div className="relative">
                 <input
@@ -382,6 +322,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
+                  autoComplete="current-password"
                   className="w-full pl-3.5 pr-10 py-2.5 text-xs rounded-input bg-surface border border-neutral-border text-navy placeholder:text-neutral-secondary/60 focus:outline-none focus:ring-2 focus:ring-indigo/20 focus:border-indigo transition-all font-medium"
                 />
                 <button
@@ -406,7 +347,7 @@ export default function LoginPage() {
               className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-input bg-indigo hover:bg-indigo-hover text-white text-xs font-semibold transition-all shadow-xs disabled:opacity-70 disabled:cursor-not-allowed group"
             >
               {isLoading ? (
-                <span>Verifying credentials...</span>
+                <span>Authenticating with Supabase...</span>
               ) : (
                 <>
                   <span>
@@ -430,83 +371,9 @@ export default function LoginPage() {
           <div className="pt-2 border-t border-neutral-border text-center">
             <p className="text-[11px] text-neutral-secondary flex items-center justify-center gap-1.5">
               <Lock className="w-3.5 h-3.5 text-neutral-secondary/80" />
-              <span>CampusIQ Session Guard • UIT RGPV Shivpuri</span>
+              <span>CampusIQ Session Guard • Supabase Cloud Authentication</span>
             </p>
           </div>
-        </div>
-
-        {/* Demo Access Section (Requirement 3: Dedicated Section for Testers) */}
-        <div className="bg-surface rounded-card border border-neutral-border p-5 shadow-xs space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-neutral-border/70">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-indigo" />
-              <h2 className="text-xs font-bold uppercase tracking-wider text-navy">
-                Demo Access Credentials
-              </h2>
-            </div>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-subtle text-indigo">
-              For Evaluators &amp; QA
-            </span>
-          </div>
-
-          <p className="text-xs text-neutral-secondary leading-relaxed">
-            Click any account below to auto-populate credentials for instant testing:
-          </p>
-
-          <div className="space-y-2">
-            {DEMO_ACCOUNTS.map((demo) => {
-              const isSelected =
-                primaryRole === demo.roleType &&
-                (demo.roleType === "student" || facultySubRole === demo.subRole);
-
-              return (
-                <button
-                  key={demo.label}
-                  type="button"
-                  onClick={() => handleApplyDemo(demo)}
-                  className={`w-full text-left p-3 rounded-input border transition-all flex items-start justify-between gap-3 ${
-                    isSelected
-                      ? "bg-indigo-subtle/50 border-indigo shadow-xs"
-                      : "bg-neutral-light border-neutral-border hover:bg-neutral-light/80 hover:border-neutral-border/90"
-                  }`}
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-navy">
-                        {demo.label}
-                      </span>
-                      <span
-                        className={`text-[10px] font-semibold px-1.5 py-0.2 rounded ${
-                          demo.badge === "Active"
-                            ? "bg-semantic-success-subtle text-semantic-success"
-                            : "bg-neutral-border text-neutral-secondary"
-                        }`}
-                      >
-                        {demo.badge}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 font-mono text-[11px] text-neutral-secondary">
-                      <span>ID: <strong className="text-navy">{demo.demoId}</strong></span>
-                      <span>•</span>
-                      <span>Pass: <strong className="text-navy">{demo.password}</strong></span>
-                    </div>
-                    <p className="text-[11px] text-neutral-secondary">
-                      {demo.description}
-                    </p>
-                  </div>
-
-                  <span className="text-[11px] font-semibold text-indigo self-center flex-shrink-0">
-                    Use &rarr;
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <p className="text-[10.5px] text-neutral-secondary text-center pt-1 leading-snug">
-            Demo credentials are local test accounts for previewing flows.
-            Supabase Auth handles live authenticated sessions.
-          </p>
         </div>
       </main>
 
@@ -517,12 +384,7 @@ export default function LoginPage() {
         </p>
       </footer>
 
-      {/* ============================================================ */}
-      {/* FUTURE UPDATE MODAL for Teacher / HOD / Admin                */}
-      {/* Requirement 4: "For Teacher, HOD, and Admin demo access,    */}
-      {/* show a simple message: 'This portal will be available in a  */}
-      {/* future update.'"                                             */}
-      {/* ============================================================ */}
+      {/* Future Update Modal for Teacher / HOD */}
       {futurePortalRole && (
         <div
           role="dialog"
@@ -552,7 +414,7 @@ export default function LoginPage() {
             <div className="p-3 rounded-input bg-neutral-light border border-neutral-border text-[11px] text-neutral-secondary text-left space-y-1">
               <p className="font-semibold text-navy">Current Active Scope:</p>
               <p>
-                The <strong>Student Academic Workspace</strong> (Home, Attendance, Assignments, Notes Library, and Student Profile) is fully operational for testing.
+                The <strong>Student Academic Workspace</strong> is fully operational.
               </p>
             </div>
 
@@ -565,7 +427,7 @@ export default function LoginPage() {
                 }}
                 className="w-full py-2.5 px-4 rounded-input bg-indigo hover:bg-indigo-hover text-white text-xs font-semibold transition-colors shadow-xs"
               >
-                Switch to Student Demo Portal
+                Switch to Student Portal
               </button>
               <button
                 type="button"

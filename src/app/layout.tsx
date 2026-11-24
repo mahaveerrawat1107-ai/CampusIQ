@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import { AppShell } from "@/components/layout/AppShell";
+import { AuthProvider } from "@/context/AuthContext";
 import { AttendanceProvider } from "@/context/AttendanceContext";
 import { AssignmentsProvider } from "@/context/AssignmentsContext";
 import { NotesProvider } from "@/context/NotesContext";
@@ -34,13 +35,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={manrope.variable}>
       <body className="min-h-screen bg-background font-sans text-navy antialiased">
-        <AttendanceProvider>
-          <AssignmentsProvider>
-            <NotesProvider>
-              <AppShell>{children}</AppShell>
-            </NotesProvider>
-          </AssignmentsProvider>
-        </AttendanceProvider>
+        <AuthProvider>
+          <AttendanceProvider>
+            <AssignmentsProvider>
+              <NotesProvider>
+                <AppShell>{children}</AppShell>
+              </NotesProvider>
+            </AssignmentsProvider>
+          </AttendanceProvider>
+        </AuthProvider>
       </body>
     </html>
   );
