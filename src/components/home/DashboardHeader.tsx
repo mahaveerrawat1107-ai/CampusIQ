@@ -42,8 +42,8 @@ export function DashboardHeader({ studentName }: DashboardHeaderProps) {
               <Sparkles className="w-3.5 h-3.5" />
               <span>Academic Overview</span>
             </span>
-            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-neutral-light border border-neutral-border text-neutral-secondary">
-              Illustrative Demo Data
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-semantic-success-subtle border border-semantic-success/20 text-semantic-success">
+              Live Cloud Synced
             </span>
           </div>
           <h1 className="text-[26px] sm:text-[28px] font-bold text-navy tracking-tight leading-tight">

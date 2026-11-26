@@ -12,29 +12,42 @@ import {
 } from "lucide-react";
 import { STUDENT_PROFILE_DATA, DEFAULT_STUDENT_PREFERENCES } from "@/data/profileData";
 import { StudentPreferences } from "@/types/profile";
-
-const PREFS_STORAGE_KEY = "campusiq_student_preferences_v1";
+import { useAuth } from "@/context/AuthContext";
+import { createClient } from "@/lib/supabase/client";
 
 export function AccountSettingsCard() {
+  const { user, profile } = useAuth();
+  const [supabase] = useState(() => createClient());
   const [preferences, setPreferences] = useState<StudentPreferences>(DEFAULT_STUDENT_PREFERENCES);
   const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
 
-  // Load preferences from localStorage on mount
+  // Load preferences from Supabase student_preferences on mount / user change
   useEffect(() => {
-    try {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem(PREFS_STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          setPreferences((prev) => ({ ...prev, ...parsed }));
-        }
-      }
-    } catch (e) {
-      console.warn("Could not load preferences:", e);
-    }
-  }, []);
+    async function loadPreferences() {
+      if (!user) return;
+      try {
+        const { data, error } = await supabase
+          .from("student_preferences")
+          .select("theme, attendance_reminders, assignment_deadline_alerts, notes_updates")
+          .eq("student_id", user.id)
+          .maybeSingle();
 
-  const handleToggle = (key: keyof Omit<StudentPreferences, "theme">) => {
+        if (data && !error) {
+          setPreferences({
+            theme: (data.theme as "light" | "dark" | "system") || "system",
+            attendanceReminders: data.attendance_reminders ?? true,
+            assignmentDeadlineAlerts: data.assignment_deadline_alerts ?? true,
+            notesUpdates: data.notes_updates ?? true,
+          });
+        }
+      } catch (e) {
+        console.warn("Could not load preferences from Supabase:", e);
+      }
+    }
+    loadPreferences();
+  }, [user, supabase]);
+
+  const handleToggle = async (key: keyof Omit<StudentPreferences, "theme">) => {
     const nextVal = !preferences[key];
     const updated = {
       ...preferences,
@@ -42,16 +55,33 @@ export function AccountSettingsCard() {
     };
     setPreferences(updated);
 
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.setItem(PREFS_STORAGE_KEY, JSON.stringify(updated));
+    if (user) {
+      try {
+        const { error } = await supabase
+          .from("student_preferences")
+          .upsert({
+            student_id: user.id,
+            theme: updated.theme,
+            attendance_reminders: updated.attendanceReminders,
+            assignment_deadline_alerts: updated.assignmentDeadlineAlerts,
+            notes_updates: updated.notesUpdates,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "student_id" });
+
+        if (error) {
+          console.error("Failed to save preferences to Supabase:", error);
+        } else {
+          setSaveSuccessMessage("Notification preferences saved to cloud.");
+          setTimeout(() => setSaveSuccessMessage(null), 2500);
+        }
+      } catch (e) {
+        console.error("Could not persist preferences:", e);
       }
-      setSaveSuccessMessage("Notification preferences saved successfully.");
-      setTimeout(() => setSaveSuccessMessage(null), 2500);
-    } catch (e) {
-      console.error("Could not persist preferences:", e);
     }
   };
+
+  const studentEmail = user?.email || profile?.email || STUDENT_PROFILE_DATA.email;
+  const studentPhone = profile?.phone || STUDENT_PROFILE_DATA.phone;
 
   return (
     <div className="bg-surface rounded-card border border-neutral-border p-6 shadow-card space-y-5">
@@ -90,7 +120,7 @@ export function AccountSettingsCard() {
               Official Student Email
             </span>
             <p className="text-xs font-bold text-navy truncate mt-0.5">
-              {STUDENT_PROFILE_DATA.email}
+              {studentEmail}
             </p>
           </div>
         </div>
@@ -104,7 +134,7 @@ export function AccountSettingsCard() {
               Registered Phone Number
             </span>
             <p className="text-xs font-bold text-navy tabular-nums mt-0.5">
-              {STUDENT_PROFILE_DATA.phone}
+              {studentPhone}
             </p>
           </div>
         </div>

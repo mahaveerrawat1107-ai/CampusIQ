@@ -10,13 +10,20 @@ import {
   BookOpen,
 } from "lucide-react";
 import { STUDENT_PROFILE_DATA } from "@/data/profileData";
+import { useAuth } from "@/context/AuthContext";
 
 export function ProfileHeaderCard() {
+  const { profile } = useAuth();
   const [copied, setCopied] = useState(false);
+
+  const fullName = profile?.full_name || STUDENT_PROFILE_DATA.name;
+  const avatarInitials = profile?.avatar_initials || (profile?.full_name ? profile.full_name.slice(0, 2).toUpperCase() : "MR");
+  const enrollmentNo = profile?.enrollment_no || STUDENT_PROFILE_DATA.enrollmentNo;
+  const isVerified = profile?.verification_status === "verified";
 
   const handleCopyEnrollment = () => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(STUDENT_PROFILE_DATA.enrollmentNo);
+      navigator.clipboard.writeText(enrollmentNo);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -30,22 +37,28 @@ export function ProfileHeaderCard() {
           {/* Avatar with Initials */}
           <div className="relative">
             <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-navy text-white text-xl sm:text-2xl font-bold flex items-center justify-center shadow-sm flex-shrink-0">
-              {STUDENT_PROFILE_DATA.avatarInitials}
+              {avatarInitials}
             </div>
             <span
-              className="absolute bottom-0 right-0 w-4.5 h-4.5 rounded-full bg-semantic-success border-2 border-surface"
-              title="Active institutional enrollment"
+              className={`absolute bottom-0 right-0 w-4.5 h-4.5 rounded-full border-2 border-surface ${
+                isVerified ? "bg-semantic-success" : "bg-amber-500"
+              }`}
+              title={isVerified ? "Active verified institutional enrollment" : "Verification Pending"}
             />
           </div>
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-[22px] sm:text-[24px] font-bold text-navy leading-none">
-                {STUDENT_PROFILE_DATA.name}
+                {fullName}
               </h2>
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-semantic-success-subtle text-semantic-success border border-semantic-success/20">
+              <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
+                isVerified 
+                  ? "bg-semantic-success-subtle text-semantic-success border-semantic-success/20" 
+                  : "bg-amber-50 text-amber-700 border-amber-200"
+              }`}>
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Active Student</span>
+                <span>{isVerified ? "Active Verified Student" : "Verification Pending"}</span>
               </span>
             </div>
 
@@ -60,7 +73,7 @@ export function ProfileHeaderCard() {
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-input bg-neutral-light border border-neutral-border text-xs">
                 <span className="text-neutral-secondary font-medium">Enrollment:</span>
                 <span className="font-bold text-navy tabular-nums">
-                  {STUDENT_PROFILE_DATA.enrollmentNo}
+                  {enrollmentNo}
                 </span>
                 <button
                   type="button"

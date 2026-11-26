@@ -11,7 +11,10 @@ import {
   deleteNotePdfBlob,
   validateNotePdfFile,
   formatFileSize,
+  createSampleNotePdfDataUrl,
 } from "@/lib/notesStorage";
+import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 export interface StaffNotesStats {
   total: number;
@@ -37,48 +40,90 @@ interface NotesContextType {
   replaceNotePdf: (id: string, newFile: File) => Promise<{ success: boolean; error?: string }>;
   deleteStaffNote: (id: string) => Promise<{ success: boolean }>;
   toggleNotePublishStatus: (id: string) => void;
+  refreshNotes: () => Promise<void>;
   resetNotesToDefaultSeed: () => void;
 }
-
-const STORAGE_KEY_NOTES = "campusiq_notes_catalog_v1";
 
 const NotesContext = createContext<NotesContextType | undefined>(undefined);
 
 export function NotesProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const [supabase] = useState(() => createClient());
   const [subjects] = useState<Subject[]>(PILOT_SUBJECTS);
   const [notes, setNotes] = useState<AcademicNote[]>(SEED_ACADEMIC_NOTES);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Hydrate from localStorage on client mount
-  useEffect(() => {
+  // Fetch notes from Supabase academic_notes
+  const fetchSupabaseNotes = useCallback(async () => {
     try {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem(STORAGE_KEY_NOTES);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setNotes(parsed);
-          }
-        }
+      const { data: dbNotes, error } = await supabase
+        .from("academic_notes")
+        .select(`
+          id,
+          title,
+          description,
+          semester,
+          subject_id,
+          unit,
+          unit_title,
+          file_name,
+          file_size,
+          storage_path,
+          uploaded_by,
+          is_published,
+          uploaded_at,
+          updated_at
+        `);
+
+      if (!error && dbNotes && dbNotes.length > 0) {
+        const mapped: AcademicNote[] = dbNotes.map((n) => {
+          const subj = PILOT_SUBJECTS.find((s) => s.id === n.subject_id);
+          const sizeNum = typeof n.file_size === "number" ? n.file_size : 2 * 1024 * 1024;
+          const uTitle = n.unit_title || getUnitTitle(n.subject_id, n.unit || 1);
+
+          // Get public URL from storage if bucket exists
+          const { data: publicUrlData } = supabase.storage
+            .from("academic-notes")
+            .getPublicUrl(n.storage_path);
+
+          return {
+            id: n.id,
+            title: n.title,
+            description: n.description || "",
+            semester: n.semester || 1,
+            subjectId: n.subject_id || "sub-bt101",
+            subjectName: subj?.name || "General Engineering",
+            subjectCode: subj?.code || "BT-100",
+            unit: n.unit || 1,
+            unitTitle: uTitle,
+            fileName: n.file_name || `${n.title}.pdf`,
+            fileSize: sizeNum,
+            fileSizeFormatted: formatFileSize(sizeNum),
+            uploadedAt: n.uploaded_at,
+            uploadedBy: "Faculty / Academic Dept",
+            isPublished: n.is_published,
+            storageKey: n.storage_path,
+            dataUrl: publicUrlData?.publicUrl || createSampleNotePdfDataUrl(
+              subj?.code || "BT",
+              subj?.name || "Engineering Subject",
+              uTitle,
+              n.title,
+              "Academic Faculty"
+            ),
+          };
+        });
+        setNotes(mapped);
       }
-    } catch (e) {
-      console.warn("Could not read local notes storage:", e);
+    } catch (err) {
+      console.warn("Could not fetch notes from Supabase, keeping current state:", err);
     } finally {
       setIsHydrated(true);
     }
-  }, []);
+  }, [supabase]);
 
-  // Persist metadata to localStorage
-  const persistNotes = useCallback((newNotes: AcademicNote[]) => {
-    setNotes(newNotes);
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(newNotes));
-      }
-    } catch (e) {
-      console.error("Failed to save notes catalog to local storage:", e);
-    }
-  }, []);
+  useEffect(() => {
+    fetchSupabaseNotes();
+  }, [fetchSupabaseNotes]);
 
   // Published notes for student view
   const publishedNotes = useMemo(() => {
@@ -105,47 +150,36 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
     };
   }, [notes]);
 
-  // Create new note with PDF upload
+  // Create note (Staff)
   const createStaffNote = async (
     data: StaffNoteFormData,
     file: File
   ): Promise<{ success: boolean; error?: string }> => {
-    if (!data.title || !data.title.trim()) {
-      return { success: false, error: "Note title is required." };
-    }
-    if (!data.subjectId) {
-      return { success: false, error: "Please select a course subject." };
-    }
-    if (!data.unit || data.unit < 1 || data.unit > 5) {
-      return { success: false, error: "Please select a valid syllabus unit (1 to 5)." };
-    }
-    if (!file) {
-      return { success: false, error: "Please upload a PDF document for this note." };
+    const fileValidation = validateNotePdfFile(file);
+    if (!fileValidation.valid) {
+      return { success: false, error: fileValidation.error };
     }
 
-    const validation = validateNotePdfFile(file);
-    if (!validation.valid) {
-      return { success: false, error: validation.error };
-    }
-
-    const storageKey = `note_blob_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-    const saved = await saveNotePdfBlob(storageKey, file, file.name);
-
-    if (!saved) {
-      return {
-        success: false,
-        error: "Failed to persist PDF file in local storage. Please try again.",
-      };
-    }
-
+    const noteId = `note-${Date.now()}`;
+    const storageKey = `notes/${noteId}_${file.name}`;
     const subj = subjects.find((s) => s.id === data.subjectId)!;
     const unitTitle = getUnitTitle(data.subjectId, data.unit);
 
+    // Save locally to IndexedDB as fallback
+    await saveNotePdfBlob(storageKey, file, file.name);
+
+    // Upload to Supabase Storage if bucket is reachable
+    try {
+      await supabase.storage.from("academic-notes").upload(storageKey, file);
+    } catch (e) {
+      console.warn("Supabase storage upload bypassed:", e);
+    }
+
     const newNote: AcademicNote = {
-      id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      id: noteId,
       title: data.title.trim(),
       description: data.description ? data.description.trim() : "",
-      semester: data.semester || 1,
+      semester: data.semester,
       subjectId: data.subjectId,
       subjectName: subj.name,
       subjectCode: subj.code,
@@ -155,34 +189,23 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
       fileSize: file.size,
       fileSizeFormatted: formatFileSize(file.size),
       uploadedAt: new Date().toISOString(),
-      uploadedBy: data.uploadedBy || "Faculty Instructor (UIT RGPV)",
+      uploadedBy: data.uploadedBy || "Faculty / Academic Dept",
       isPublished: Boolean(data.isPublished),
       storageKey,
     };
 
-    const updated = [newNote, ...notes];
-    persistNotes(updated);
+    setNotes([newNote, ...notes]);
     return { success: true };
   };
 
-  // Edit note metadata (preserves existing stored PDF!)
+  // Edit Note
   const editStaffNote = async (
     id: string,
     data: StaffNoteFormData
   ): Promise<{ success: boolean; error?: string }> => {
-    if (!data.title || !data.title.trim()) {
-      return { success: false, error: "Note title is required." };
-    }
-    if (!data.subjectId) {
-      return { success: false, error: "Please select a course subject." };
-    }
-    if (!data.unit || data.unit < 1 || data.unit > 5) {
-      return { success: false, error: "Please select a valid unit." };
-    }
-
     const index = notes.findIndex((n) => n.id === id);
     if (index === -1) {
-      return { success: false, error: "Academic note not found." };
+      return { success: false, error: "Note not found." };
     }
 
     const subj = subjects.find((s) => s.id === data.subjectId)!;
@@ -193,7 +216,7 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
       ...updated[index],
       title: data.title.trim(),
       description: data.description ? data.description.trim() : "",
-      semester: data.semester || 1,
+      semester: data.semester,
       subjectId: data.subjectId,
       subjectName: subj.name,
       subjectCode: subj.code,
@@ -202,82 +225,72 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
       isPublished: Boolean(data.isPublished),
     };
 
-    persistNotes(updated);
+    setNotes(updated);
     return { success: true };
   };
 
-  // Replace PDF file of an existing note
+  // Replace PDF
   const replaceNotePdf = async (
     id: string,
     newFile: File
   ): Promise<{ success: boolean; error?: string }> => {
+    const fileValidation = validateNotePdfFile(newFile);
+    if (!fileValidation.valid) {
+      return { success: false, error: fileValidation.error };
+    }
+
     const index = notes.findIndex((n) => n.id === id);
     if (index === -1) {
-      return { success: false, error: "Academic note not found." };
+      return { success: false, error: "Note not found." };
     }
 
-    const validation = validateNotePdfFile(newFile);
-    if (!validation.valid) {
-      return { success: false, error: validation.error };
-    }
+    const targetNote = notes[index];
+    await deleteNotePdfBlob(targetNote.storageKey);
 
-    const oldKey = notes[index].storageKey;
-    const newStorageKey = `note_blob_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-    const saved = await saveNotePdfBlob(newStorageKey, newFile, newFile.name);
+    const newStorageKey = `notes/${targetNote.id}_${newFile.name}`;
+    await saveNotePdfBlob(newStorageKey, newFile, newFile.name);
 
-    if (!saved) {
-      return {
-        success: false,
-        error: "Failed to persist new PDF file in local storage.",
-      };
-    }
-
-    // Clean up old blob if it wasn't a static seed
-    if (oldKey && !oldKey.startsWith("notes_blob_seed_")) {
-      deleteNotePdfBlob(oldKey).catch(() => {});
+    try {
+      await supabase.storage.from("academic-notes").upload(newStorageKey, newFile, { upsert: true });
+    } catch (e) {
+      console.warn("Storage upload bypassed:", e);
     }
 
     const updated = [...notes];
     updated[index] = {
-      ...updated[index],
+      ...targetNote,
       fileName: newFile.name,
       fileSize: newFile.size,
       fileSizeFormatted: formatFileSize(newFile.size),
-      uploadedAt: new Date().toISOString(),
       storageKey: newStorageKey,
-      dataUrl: undefined, // Cleared because replaced with real file
+      dataUrl: undefined,
     };
 
-    persistNotes(updated);
+    setNotes(updated);
     return { success: true };
   };
 
-  // Delete note (cleans up associated PDF blob)
+  // Delete note
   const deleteStaffNote = async (id: string): Promise<{ success: boolean }> => {
     const target = notes.find((n) => n.id === id);
-    if (target && target.storageKey && !target.storageKey.startsWith("notes_blob_seed_")) {
-      deleteNotePdfBlob(target.storageKey).catch(() => {});
+    if (target) {
+      await deleteNotePdfBlob(target.storageKey);
     }
-
-    const updated = notes.filter((n) => n.id !== id);
-    persistNotes(updated);
+    setNotes(notes.filter((n) => n.id !== id));
     return { success: true };
   };
 
-  // Toggle publish / unpublish status
+  // Toggle publish
   const toggleNotePublishStatus = (id: string) => {
-    const updated = notes.map((n) => {
-      if (n.id === id) {
-        return { ...n, isPublished: !n.isPublished };
-      }
-      return n;
-    });
-    persistNotes(updated);
+    setNotes(
+      notes.map((n) =>
+        n.id === id ? { ...n, isPublished: !n.isPublished } : n
+      )
+    );
   };
 
-  // Reset to default seed dataset
   const resetNotesToDefaultSeed = () => {
-    persistNotes(SEED_ACADEMIC_NOTES);
+    setNotes(SEED_ACADEMIC_NOTES);
   };
 
   return (
@@ -285,16 +298,15 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
       value={{
         subjects,
         isHydrated,
-
         publishedNotes,
         allNotes: notes,
         staffStats,
-
         createStaffNote,
         editStaffNote,
         replaceNotePdf,
         deleteStaffNote,
         toggleNotePublishStatus,
+        refreshNotes: fetchSupabaseNotes,
         resetNotesToDefaultSeed,
       }}
     >

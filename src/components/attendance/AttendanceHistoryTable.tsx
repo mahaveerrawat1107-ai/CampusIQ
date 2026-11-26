@@ -20,6 +20,8 @@ export function AttendanceHistoryTable() {
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Filtered + sorted records (most recent first)
   const filteredRecords = useMemo(() => {
@@ -43,6 +45,16 @@ export function AttendanceHistoryTable() {
   const handleStatusFilter = (val: string) => {
     setStatusFilter(val);
     setVisibleCount(PAGE_SIZE);
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeleteError(null);
+    setDeletingId(id);
+    const res = await deleteRecord(id);
+    setDeletingId(null);
+    if (!res.success) {
+      setDeleteError(res.message);
+    }
   };
 
   const visibleRecords = filteredRecords.slice(0, visibleCount);
@@ -95,6 +107,20 @@ export function AttendanceHistoryTable() {
           </select>
         </div>
       </div>
+
+      {/* Delete Feedback Error */}
+      {deleteError && (
+        <div className="mt-4 p-3 rounded-input bg-semantic-error-subtle border border-semantic-error/30 text-semantic-error text-xs flex items-center justify-between">
+          <span>{deleteError}</span>
+          <button
+            type="button"
+            onClick={() => setDeleteError(null)}
+            className="text-xs font-semibold underline hover:text-navy"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* History List */}
       {filteredRecords.length === 0 ? (
@@ -165,12 +191,13 @@ export function AttendanceHistoryTable() {
 
                     <button
                       type="button"
-                      onClick={() => deleteRecord(record.id)}
-                      className="p-1 rounded text-neutral-secondary hover:text-semantic-error hover:bg-neutral-light transition-colors"
+                      onClick={() => handleDelete(record.id)}
+                      disabled={deletingId === record.id}
+                      className="p-1 rounded text-neutral-secondary hover:text-semantic-error hover:bg-neutral-light transition-colors disabled:opacity-40"
                       title="Delete this record"
                       aria-label="Delete attendance record"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className={`w-3.5 h-3.5 ${deletingId === record.id ? "animate-pulse text-semantic-error" : ""}`} />
                     </button>
                   </div>
                 </div>

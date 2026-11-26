@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { MessageSquare, X, CheckCircle2, Send, HelpCircle } from "lucide-react";
 import { STUDENT_PROFILE_DATA } from "@/data/profileData";
+import { useAuth } from "@/context/AuthContext";
+import { createClient } from "@/lib/supabase/client";
 
 interface FeedbackModalProps {
   isOpen: boolean;
@@ -10,11 +12,17 @@ interface FeedbackModalProps {
 }
 
 export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
+  const { user, profile } = useAuth();
+  const [supabase] = useState(() => createClient());
   const [category, setCategory] = useState<string>("Attendance Query");
   const [subject, setSubject] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const studentName = profile?.full_name || STUDENT_PROFILE_DATA.name;
+  const enrollmentNo = profile?.enrollment_no || STUDENT_PROFILE_DATA.enrollmentNo;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -33,21 +41,45 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
       setSubject("");
       setMessage("");
       setIsSubmitting(false);
+      setErrorMessage(null);
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
 
     setIsSubmitting(true);
-    // Simulate submission delay
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmitted(true);
-    }, 400);
+    setErrorMessage(null);
+
+    if (user) {
+      try {
+        const { error } = await supabase.from("support_queries").insert({
+          student_id: user.id,
+          category: category,
+          subject: subject.trim() || category,
+          message: message.trim(),
+          status: "open",
+        });
+
+        if (error) {
+          console.error("Error submitting support query to Supabase:", error);
+          setErrorMessage("Failed to submit inquiry to server. Please try again.");
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Exception submitting support query:", err);
+        setErrorMessage("Network error occurred.");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    setIsSubmitting(false);
+    setSubmitted(true);
   };
 
   return (
@@ -95,7 +127,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
               Message Recorded Successfully
             </h4>
             <p className="text-xs text-neutral-secondary max-w-sm mx-auto leading-relaxed">
-              Your inquiry has been logged for <span className="font-semibold text-navy">{STUDENT_PROFILE_DATA.name}</span> ({STUDENT_PROFILE_DATA.enrollmentNo}). In the production system, this notifies Dr. S.K. Jain and the academic coordinator cell.
+              Your inquiry has been logged for <span className="font-semibold text-navy">{studentName}</span> ({enrollmentNo}). In the production system, this notifies Dr. S.K. Jain and the academic coordinator cell.
             </p>
             <div className="pt-3">
               <button
@@ -109,11 +141,16 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
+            {errorMessage && (
+              <div className="p-2.5 rounded-input bg-rose-50 border border-rose-200 text-xs text-rose-700">
+                {errorMessage}
+              </div>
+            )}
             <div className="p-3 rounded-input bg-neutral-light/70 border border-neutral-border/60 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-navy">{STUDENT_PROFILE_DATA.name}</span>
+                <span className="font-semibold text-navy">{studentName}</span>
                 <span className="text-neutral-secondary">•</span>
-                <span className="text-neutral-secondary">{STUDENT_PROFILE_DATA.enrollmentNo}</span>
+                <span className="text-neutral-secondary">{enrollmentNo}</span>
               </div>
               <span className="text-[11px] font-medium text-neutral-secondary">
                 {STUDENT_PROFILE_DATA.section}

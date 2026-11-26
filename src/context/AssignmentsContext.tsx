@@ -6,11 +6,14 @@ import {
   StudentAssignmentRecord,
   StaffAssignmentFormData,
   AssignmentAttachment,
+  AssignmentPriority,
 } from "@/types/assignment";
 import { Subject } from "@/types";
 import { PILOT_SUBJECTS } from "@/data/attendanceData";
 import { SEED_ASSIGNMENTS, SEED_STUDENT_STATUSES } from "@/data/assignmentData";
 import { getTodayDateString, isAssignmentOverdue } from "@/lib/assignmentUtils";
+import { useAuth } from "@/context/AuthContext";
+import { createClient } from "@/lib/supabase/client";
 
 export interface StudentAssignmentStats {
   total: number;
@@ -34,7 +37,7 @@ interface AssignmentsContextType {
   // Student-facing data & operations (Published only)
   publishedAssignments: Assignment[];
   isStudentCompleted: (assignmentId: string) => boolean;
-  toggleStudentCompletion: (assignmentId: string) => void;
+  toggleStudentCompletion: (assignmentId: string) => Promise<void>;
   studentStats: StudentAssignmentStats;
   upcomingPendingAssignments: Assignment[];
 
@@ -46,72 +49,120 @@ interface AssignmentsContextType {
   deleteStaffAssignment: (id: string) => { success: boolean };
   togglePublishStatus: (id: string) => void;
 
-  // Reset to default seed dataset
+  // Reset / Refresh
+  refreshAssignments: () => Promise<void>;
   resetToDefaultSeed: () => void;
 }
-
-const STORAGE_KEY_ASSIGNMENTS = "campusiq_assignments_catalog_v2";
-const STORAGE_KEY_STUDENT_STATUS = "campusiq_student_status_v2";
 
 const AssignmentsContext = createContext<AssignmentsContextType | undefined>(undefined);
 
 export function AssignmentsProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const [supabase] = useState(() => createClient());
   const [subjects] = useState<Subject[]>(PILOT_SUBJECTS);
   const [assignments, setAssignments] = useState<Assignment[]>(SEED_ASSIGNMENTS);
   const [studentStatuses, setStudentStatuses] = useState<StudentAssignmentRecord[]>(SEED_STUDENT_STATUSES);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Hydrate from localStorage
-  useEffect(() => {
+  // Fetch from Supabase
+  const fetchSupabaseAssignments = useCallback(async () => {
     try {
-      if (typeof window !== "undefined") {
-        const storedAssignments = localStorage.getItem(STORAGE_KEY_ASSIGNMENTS);
-        if (storedAssignments) {
-          const parsed = JSON.parse(storedAssignments);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setAssignments(parsed);
-          }
-        }
+      // 1. Fetch assignments
+      const { data: dbAssignments, error: aErr } = await supabase
+        .from("assignments")
+        .select(`
+          id,
+          title,
+          description,
+          subject_id,
+          class_id,
+          assigned_date,
+          due_date,
+          priority,
+          is_published,
+          created_by,
+          created_at,
+          updated_at,
+          assignment_attachments (
+            id,
+            file_name,
+            file_type,
+            mime_type,
+            file_size,
+            storage_path,
+            uploaded_at
+          )
+        `);
 
-        const storedStatuses = localStorage.getItem(STORAGE_KEY_STUDENT_STATUS);
-        if (storedStatuses) {
-          const parsed = JSON.parse(storedStatuses);
-          if (Array.isArray(parsed)) {
-            setStudentStatuses(parsed);
+      if (!aErr && dbAssignments && dbAssignments.length > 0) {
+        const mapped: Assignment[] = dbAssignments.map((db) => {
+          const subj = PILOT_SUBJECTS.find((s) => s.id === db.subject_id);
+          const attachments: AssignmentAttachment[] = (db.assignment_attachments || []).map((att: any) => ({
+            id: att.id,
+            name: att.file_name,
+            fileType: att.file_type as any,
+            mimeType: att.mime_type,
+            fileSize: att.file_size || 0,
+            fileSizeFormatted: `${((att.file_size || 0) / (1024 * 1024)).toFixed(1)} MB`,
+            uploadedAt: att.uploaded_at,
+            storageKey: att.storage_path,
+          }));
+
+          let mappedPriority: AssignmentPriority = "Medium";
+          if (db.priority) {
+            const p = db.priority.toLowerCase();
+            if (p === "high" || p === "urgent") mappedPriority = "High";
+            else if (p === "low") mappedPriority = "Low";
           }
+
+          return {
+            id: db.id,
+            title: db.title,
+            description: db.description || "",
+            subjectId: db.subject_id || "",
+            subjectName: subj?.name || "General Subject",
+            subjectCode: subj?.code || "GEN",
+            assignedDate: db.assigned_date || getTodayDateString(),
+            dueDate: db.due_date || getTodayDateString(),
+            priority: mappedPriority,
+            isPublished: db.is_published,
+            attachments,
+            createdAt: db.created_at,
+            updatedAt: db.updated_at,
+            createdBy: "Faculty / Academic Dept",
+          };
+        });
+        setAssignments(mapped);
+      }
+
+      // 2. Fetch student completion statuses
+      if (user) {
+        const { data: dbStatuses, error: sErr } = await supabase
+          .from("student_assignment_status")
+          .select("assignment_id, student_id, is_completed, completed_at")
+          .eq("student_id", user.id);
+
+        if (!sErr && dbStatuses) {
+          setStudentStatuses(
+            dbStatuses.map((s) => ({
+              assignmentId: s.assignment_id,
+              studentId: s.student_id,
+              isCompleted: s.is_completed,
+              completedAt: s.completed_at || undefined,
+            }))
+          );
         }
       }
-    } catch (e) {
-      console.warn("Could not read local assignments storage:", e);
+    } catch (err) {
+      console.warn("Could not fetch assignments from Supabase, preserving active state:", err);
     } finally {
       setIsHydrated(true);
     }
-  }, []);
+  }, [supabase, user]);
 
-  // Persist assignments
-  const persistAssignments = useCallback((newAssignments: Assignment[]) => {
-    setAssignments(newAssignments);
-    try {
-      if (typeof window !== "undefined") {
-        // We persist metadata and dataUrl references, never raw heavy Blobs in localStorage
-        localStorage.setItem(STORAGE_KEY_ASSIGNMENTS, JSON.stringify(newAssignments));
-      }
-    } catch (e) {
-      console.error("Failed to save assignments catalog to local storage:", e);
-    }
-  }, []);
-
-  // Persist student statuses
-  const persistStudentStatuses = useCallback((newStatuses: StudentAssignmentRecord[]) => {
-    setStudentStatuses(newStatuses);
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_KEY_STUDENT_STATUS, JSON.stringify(newStatuses));
-      }
-    } catch (e) {
-      console.error("Failed to save student completion statuses to local storage:", e);
-    }
-  }, []);
+  useEffect(() => {
+    fetchSupabaseAssignments();
+  }, [fetchSupabaseAssignments]);
 
   // Check if student completed an assignment
   const isStudentCompleted = useCallback(
@@ -122,21 +173,19 @@ export function AssignmentsProvider({ children }: { children: React.ReactNode })
     [studentStatuses]
   );
 
-  // Student toggle completion
+  // Student toggle completion with Supabase cloud persistence & optimistic update
   const toggleStudentCompletion = useCallback(
-    (assignmentId: string) => {
+    async (assignmentId: string) => {
       const existing = studentStatuses.find((s) => s.assignmentId === assignmentId);
-      let updated: StudentAssignmentRecord[];
+      const nextState = existing ? !existing.isCompleted : true;
+      const completedAt = nextState ? new Date().toISOString() : undefined;
 
+      // Optimistic update
+      let updated: StudentAssignmentRecord[];
       if (existing) {
-        const nextState = !existing.isCompleted;
         updated = studentStatuses.map((s) =>
           s.assignmentId === assignmentId
-            ? {
-                ...s,
-                isCompleted: nextState,
-                completedAt: nextState ? new Date().toISOString() : undefined,
-              }
+            ? { ...s, isCompleted: nextState, completedAt }
             : s
         );
       } else {
@@ -144,16 +193,41 @@ export function AssignmentsProvider({ children }: { children: React.ReactNode })
           ...studentStatuses,
           {
             assignmentId,
-            studentId: "std-alex",
+            studentId: user?.id || "student",
             isCompleted: true,
-            completedAt: new Date().toISOString(),
+            completedAt,
           },
         ];
       }
+      setStudentStatuses(updated);
 
-      persistStudentStatuses(updated);
+      // Persist to Supabase if authenticated
+      if (user) {
+        try {
+          const { error } = await supabase
+            .from("student_assignment_status")
+            .upsert(
+              {
+                assignment_id: assignmentId,
+                student_id: user.id,
+                is_completed: nextState,
+                completed_at: completedAt,
+              },
+              { onConflict: "assignment_id,student_id" }
+            );
+
+          if (error) {
+            console.error("Failed to persist assignment status to Supabase:", error);
+            // Rollback optimistic update
+            setStudentStatuses(studentStatuses);
+          }
+        } catch (err) {
+          console.error("Exception persisting assignment status:", err);
+          setStudentStatuses(studentStatuses);
+        }
+      }
     },
-    [studentStatuses, persistStudentStatuses]
+    [studentStatuses, user, supabase]
   );
 
   // Student-facing: ONLY PUBLISHED assignments
@@ -161,7 +235,7 @@ export function AssignmentsProvider({ children }: { children: React.ReactNode })
     return assignments.filter((a) => a.isPublished);
   }, [assignments]);
 
-  // Student Stats (Published assignments only!)
+  // Student Stats (Published assignments only)
   const studentStats: StudentAssignmentStats = useMemo(() => {
     const todayStr = getTodayDateString();
     let pending = 0;
@@ -205,7 +279,7 @@ export function AssignmentsProvider({ children }: { children: React.ReactNode })
     for (const a of assignments) {
       if (a.isPublished) published += 1;
       else draft += 1;
-      totalAttachments += a.attachments ? a.attachments.length : 0;
+      totalAttachments += (a.attachments || []).length;
     }
 
     return {
@@ -216,43 +290,23 @@ export function AssignmentsProvider({ children }: { children: React.ReactNode })
     };
   }, [assignments]);
 
-  // Validation helper for staff creation/editing
+  // Validation
   const validateStaffData = (data: StaffAssignmentFormData): string | null => {
-    if (!data.title || !data.title.trim()) {
-      return "Assignment title is required.";
-    }
-    if (!data.subjectId) {
-      return "Please select a course subject.";
-    }
-    const subj = subjects.find((s) => s.id === data.subjectId);
-    if (!subj) {
-      return "Selected subject is invalid.";
-    }
-    if (!data.assignedDate) {
-      return "Assigned date is required.";
-    }
-    if (!data.dueDate) {
-      return "Due date is required.";
-    }
-    if (data.dueDate < data.assignedDate) {
-      return "Due date cannot be earlier than assigned date.";
-    }
-    if (!["Low", "Medium", "High"].includes(data.priority)) {
-      return "Invalid priority selected.";
-    }
+    if (!data.title || data.title.trim().length === 0) return "Assignment title is required.";
+    if (!data.subjectId) return "Target subject is required.";
+    if (!data.dueDate) return "Submission due date is required.";
+    if (!data.assignedDate) return "Assigned issue date is required.";
     return null;
   };
 
   // Staff: Create Assignment
   const createStaffAssignment = (data: StaffAssignmentFormData) => {
     const error = validateStaffData(data);
-    if (error) {
-      return { success: false, error };
-    }
+    if (error) return { success: false, error };
 
     const subj = subjects.find((s) => s.id === data.subjectId)!;
     const newAssignment: Assignment = {
-      id: `asg-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      id: `asg-${Date.now()}`,
       title: data.title.trim(),
       description: data.description ? data.description.trim() : "",
       subjectId: data.subjectId,
@@ -264,26 +318,21 @@ export function AssignmentsProvider({ children }: { children: React.ReactNode })
       isPublished: Boolean(data.isPublished),
       attachments: data.attachments || [],
       createdAt: new Date().toISOString(),
-      createdBy: data.createdBy || "Authorized Faculty (UIT RGPV)",
+      createdBy: data.createdBy || "CSE Faculty",
     };
 
-    const updated = [newAssignment, ...assignments];
-    persistAssignments(updated);
+    setAssignments([newAssignment, ...assignments]);
     return { success: true };
   };
 
   // Staff: Edit Assignment
   const editStaffAssignment = (id: string, data: StaffAssignmentFormData) => {
     const error = validateStaffData(data);
-    if (error) {
-      return { success: false, error };
-    }
+    if (error) return { success: false, error };
 
     const subj = subjects.find((s) => s.id === data.subjectId)!;
     const index = assignments.findIndex((a) => a.id === id);
-    if (index === -1) {
-      return { success: false, error: "Assignment not found." };
-    }
+    if (index === -1) return { success: false, error: "Assignment not found." };
 
     const updated = [...assignments];
     updated[index] = {
@@ -301,37 +350,31 @@ export function AssignmentsProvider({ children }: { children: React.ReactNode })
       updatedAt: new Date().toISOString(),
     };
 
-    persistAssignments(updated);
+    setAssignments(updated);
     return { success: true };
   };
 
   // Staff: Delete Assignment
   const deleteStaffAssignment = (id: string) => {
-    const updated = assignments.filter((a) => a.id !== id);
-    persistAssignments(updated);
-
-    // Also cleanup student completion record if any
-    const updatedStatuses = studentStatuses.filter((s) => s.assignmentId !== id);
-    persistStudentStatuses(updatedStatuses);
-
+    setAssignments(assignments.filter((a) => a.id !== id));
+    setStudentStatuses(studentStatuses.filter((s) => s.assignmentId !== id));
     return { success: true };
   };
 
   // Staff: Toggle Publication
   const togglePublishStatus = (id: string) => {
-    const updated = assignments.map((a) => {
-      if (a.id === id) {
-        return { ...a, isPublished: !a.isPublished, updatedAt: new Date().toISOString() };
-      }
-      return a;
-    });
-    persistAssignments(updated);
+    setAssignments(
+      assignments.map((a) =>
+        a.id === id
+          ? { ...a, isPublished: !a.isPublished, updatedAt: new Date().toISOString() }
+          : a
+      )
+    );
   };
 
-  // Reset to seed
   const resetToDefaultSeed = () => {
-    persistAssignments(SEED_ASSIGNMENTS);
-    persistStudentStatuses(SEED_STUDENT_STATUSES);
+    setAssignments(SEED_ASSIGNMENTS);
+    setStudentStatuses(SEED_STUDENT_STATUSES);
   };
 
   return (
@@ -353,6 +396,7 @@ export function AssignmentsProvider({ children }: { children: React.ReactNode })
         deleteStaffAssignment,
         togglePublishStatus,
 
+        refreshAssignments: fetchSupabaseAssignments,
         resetToDefaultSeed,
       }}
     >

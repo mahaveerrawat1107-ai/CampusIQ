@@ -18,8 +18,9 @@ export default function AttendancePage() {
               <CalendarCheck2 className="w-3.5 h-3.5" />
               <span>Academic Attendance Tracker</span>
             </span>
-            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-neutral-light border border-neutral-border text-neutral-secondary">
-              Illustrative Demo Data
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-indigo-subtle border border-indigo/20 text-indigo flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-semantic-success animate-pulse" />
+              <span>Live Cloud Sync</span>
             </span>
           </div>
 

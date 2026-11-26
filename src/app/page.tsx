@@ -1,18 +1,21 @@
+"use client";
+
 import { DashboardHeader } from "@/components/home/DashboardHeader";
 import { AttendanceCard } from "@/components/home/AttendanceCard";
 import { QuickStatsCards } from "@/components/home/QuickStatsCards";
 import { UpcomingAssignments } from "@/components/home/UpcomingAssignments";
 import { RecentNotes } from "@/components/home/RecentNotes";
 import { QuickActions } from "@/components/home/QuickActions";
-import {
-  mockStudent,
-} from "@/data/mockHomeData";
+import { useAuth } from "@/context/AuthContext";
 
 export default function HomePage() {
+  const { profile } = useAuth();
+  const studentName = profile?.full_name || "Student";
+
   return (
     <div className="space-y-6">
       {/* A. Header */}
-      <DashboardHeader studentName={mockStudent.name} />
+      <DashboardHeader studentName={studentName} />
 
       {/* Top Grid: Attendance Overview + Quick Statistics */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">

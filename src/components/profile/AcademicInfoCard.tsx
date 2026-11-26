@@ -11,8 +11,12 @@ import {
   BookCheck,
 } from "lucide-react";
 import { STUDENT_PROFILE_DATA } from "@/data/profileData";
+import { useAuth } from "@/context/AuthContext";
 
 export function AcademicInfoCard() {
+  const { profile } = useAuth();
+  const enrollmentNo = profile?.enrollment_no || STUDENT_PROFILE_DATA.enrollmentNo;
+
   const academicFields = [
     {
       icon: Building2,
@@ -41,7 +45,7 @@ export function AcademicInfoCard() {
     {
       icon: Hash,
       label: "RGPV Enrollment Number",
-      value: STUDENT_PROFILE_DATA.enrollmentNo,
+      value: enrollmentNo,
       subValue: "Official University Registration Identifier",
     },
     {

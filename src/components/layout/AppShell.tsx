@@ -12,6 +12,7 @@ import {
   Bell,
   GraduationCap,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -34,6 +35,11 @@ const navItems: NavItem[] = [
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
+  const { profile } = useAuth();
+
+  const displayName = profile?.full_name || "Student";
+  const displayInitials = profile?.avatar_initials || (profile?.full_name ? profile.full_name.slice(0, 2).toUpperCase() : "ST");
+  const displayRole = profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1) : "Student";
 
   // Full-bleed clean layout for auth/login page
   if (pathname === "/login") {
@@ -130,14 +136,14 @@ export function AppShell({ children }: AppShellProps) {
             title="View Student Profile"
           >
             <div className="w-8 h-8 rounded-full bg-indigo text-white font-semibold text-xs flex items-center justify-center flex-shrink-0 group-hover:ring-2 group-hover:ring-indigo/30 transition-all">
-              AS
+              {displayInitials}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold text-navy truncate group-hover:text-indigo transition-colors">
-                Alex Sharma
+                {displayName}
               </p>
               <p className="text-[11px] text-neutral-secondary truncate">
-                1st Year CSE • Sem 1
+                {profile?.role === "student" ? "1st Year CSE • Sem 1" : displayRole}
               </p>
             </div>
           </Link>
@@ -193,14 +199,14 @@ export function AppShell({ children }: AppShellProps) {
               title="Go to Profile"
             >
               <div className="w-9 h-9 rounded-full bg-navy text-white text-xs font-semibold flex items-center justify-center group-hover:bg-indigo transition-colors">
-                AS
+                {displayInitials}
               </div>
               <div className="hidden sm:block text-left">
                 <p className="text-xs font-semibold text-navy leading-none group-hover:text-indigo transition-colors">
-                  Alex Sharma
+                  {displayName}
                 </p>
                 <p className="text-[11px] text-neutral-secondary mt-1 leading-none font-medium">
-                  Student
+                  {displayRole}
                 </p>
               </div>
             </Link>
